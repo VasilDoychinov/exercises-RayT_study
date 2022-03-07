@@ -118,6 +118,7 @@ rt_hw_2_2()
 	mGrid2_ref					grf(grid(gsl)) ;
 	
 	grf.paint(greenP, mCircle(mCoord<2>(250, 250), 250)) ;
+	grf.paint(greyP, mCircle(mCoord<2>(250, 250), 170)) ;
 
 	cout << endl << endl << ">>> Done painting: ", show_lapse(false) ;
 
