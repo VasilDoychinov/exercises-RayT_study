@@ -1,3 +1,3 @@
 # exercises-RayT_study
 exercises and sample task/projects grouped in the sub-folders as folows"
-- in folder hw2: C++ code to generate two images in .ppm files
+- source code for different tasks is placed in sub-folders hw? the created .ppm files are in hw?/ppm
