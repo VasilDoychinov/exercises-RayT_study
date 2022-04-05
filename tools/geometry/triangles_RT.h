@@ -18,9 +18,13 @@ using std::endl ;
 #include <valarray>
 
 #include "../tools/miscellaneous.h"
-// #include "coords_RT.h"
+
+
 #include "vectors_RT.h"
 
+/*
+#include "../miscellaneous.h"
+*/
 
 template <typename T>	// ??? measure for performance against Tri = (T x, T y, T z) and std::vector<>
 class triangle_RT {		// defined through std::valarray<>
@@ -33,59 +37,54 @@ class triangle_RT {		// defined through std::valarray<>
 	private:
 		using VectArr = std::valarray<vector_RT<T>> ;
 
-		VectArr _base{} ;
-		// ??? vector_RT			_normal ; of the triangle; Not normalized
+		VectArr			_base{} ;
+		vector_RT<T>	_normalN ;			// normal of the triangle;
 
 	private:
 									// for internal operations, only: No checks, hence
-		triangle_RT(VectArr&& b) : _base{std::move(b)} {/*cout << "\n___ triangle_RT(_base)..." ;*/}
+		triangle_RT(VectArr&& b) : _base{std::move(b)},
+								   _normalN{unitV(crossRHS((_base[1] - _base[0]),
+														   (_base[2] - _base[0])))
+										   }	{/*cout << "\n___ triangle_RT(_base)..." ;*/}
 
 	public:
-		triangle_RT() : _base{{0,0,0}, {0,0,0}, {0,0,0}} {}
-		triangle_RT(std::initializer_list<vector_RT<T>> il) : _base{il} { assert(il.size() == 3) ; }
+		triangle_RT() : _base{{0,0,0}, {0,0,0}, {0,0,0}}, _normalN{0,0,0} {}
+		triangle_RT(std::initializer_list<vector_RT<T>> il) 
+						: _base{il}, _normalN{unitV(crossRHS((_base[1] - _base[0]),
+															 (_base[2] - _base[0])))
+											 }	{ assert(il.size() == 3) ; }
 		// ~triangle_RT() = default :                                 skip to enforce default MOVEs
-		// triangle_RT(VectArr&& v) : _base{std::move(v._base)} {}    ...             defaults
 
 		// Access
 		void extract(vector_RT<T>& a, vector_RT<T>& b, vector_RT<T>& c) const 
 								 { a = _base[0], b = _base[1], c = _base[2] ; }
 		const vector_RT<T>& operator [](int i) const & { assert(i >=0 && i <=2) ; return(_base[i]) ; }
 		vector_RT<T>&       operator [](int i) & { assert(i >= 0 && i <= 2) ; return(_base[i]) ; }
-		// vector_RT<T>        operator [](int i) && { assert(i >=0 && i <=2) ; return(std::move(_base[i])) ; }
+		
 		// NB: edge(2) is -(V2 - V0) which is used to calcute the normal
-		vector_RT<T>		edge(int i) const {return ((i == 0 ? std::move(_base[1] - _base[0])
-														: (i == 1 ? std::move(_base[2] - _base[1])
-														: std::move(_base[0] - _base[2])))) ; } // -(V2-V0)
-		// Normal: NOT normalized
-		vector_RT<T> normal() const {
-			return (crossRHS(std::move(_base[1] - _base[0]), std::move(_base[2] - _base[0]))) ; 
-		}
-		friend vector_RT<T> normal(const triangle_RT& v) { return (v.normal()) ; }
+		vector_RT<T>		edge(int i) const {return ((i == 0 ? (_base[1] - _base[0])
+														: (i == 1 ? (_base[2] - _base[1])
+														: (_base[0] - _base[2])))) ; } // -(V2-V0)
+
 		// Normal: NORMALIZED
-		vector_RT<T> normalN() const {
-			return (unitV(crossRHS(std::move(_base[1] - _base[0]), 
-								   std::move(_base[2] - _base[0])))
-					) ;
-		}
-		friend vector_RT<T> normalN(const triangle_RT& v) { return (v.normalN()) ; }
+		vector_RT<T> normalN() const { return (_normalN) ; }
+		friend vector_RT<T> normalN(const triangle_RT& v) { return (v._normalN) ; }
 
 		// Ray intersection
 		bool _ray_hit(const vector_RT<T>& o, const vector_RT<T>& r, T& dist) const ;
-		// template <typename T>
-		// friend bool ray_hit_triangle(const vector_RT<T>& origin, const vector_RT<T>& ray,
-			//						 const triangle_RT<T>& tri, T& dist
-				//					 ) ; //, Tout g) ;
 
 		// Misc
-		const T area() const { return(length(normal()) * static_cast<T>(0.5)) ; }
+		const T area() const { return(length(crossRHS((_base[1] - _base[0]), (_base[2] - _base[0])))
+									  * static_cast<T>(0.5)) ; 
+		}
 		friend const T area(const triangle_RT& t) { return(t.area) ; }
 
 		// Moves
 		triangle_RT operator +(const vector_RT<T>& mv) { 
-			return (triangle_RT{std::move(_base + mv)}) ;
+			return (triangle_RT{(_base + mv)}) ;
 		}
 		triangle_RT operator -(const vector_RT<T>& mv) {
-			return (triangle_RT{std::move(_base - mv)}) ;
+			return (triangle_RT{(_base - mv)}) ;
 		}
 		
 
@@ -100,11 +99,11 @@ ray_hit_triangle(const vector_RT<T>& origin,	// origin
 				 T& dist						// OUTPUT: distance from origin(if returns (true))
 				)
 {
-					// static ... CALCULATIONS ???
+
 	// pointHit = Origin + coefHit * Ray
 	// coefHit = -(dot(N, Origin) - dot(N,V0)) / dot(N,Ray)
 
-	vector_RT<T>	normT{std::move(normalN(tri))} ;
+	vector_RT<T>	normT{normalN(tri)} ;
 	auto			dot_NR{dotPR(normT, ray)} ;
 
 	if (near_zero(dot_NR))		return(false) ;		// ray || plane(triangle)
@@ -114,13 +113,13 @@ ray_hit_triangle(const vector_RT<T>& origin,	// origin
 
 	if (coefHit < 0)			return(false) ;		// triangle is in the back of Origin
 
-	auto pointHit = origin + std::move((ray * coefHit)) ;
+	auto pointHit = origin + (ray * coefHit) ;
 																// cout << "\n_ pointHit= " << pointHit ;
 
 	// inside-outside test(s): test < 0 if pointHit is on the right side: 0, 1, 2
-	if (normT.dotPR(crossRHS(std::move(tri.edge(0)), std::move(pointHit - tri[0]))) < 0)   return(false) ;
-	if (normT.dotPR(crossRHS(std::move(tri.edge(1)), std::move(pointHit - tri[1]))) < 0)   return(false) ;
-	if (normT.dotPR(crossRHS(std::move(tri.edge(2)), std::move(pointHit - tri[2]))) < 0)   return(false) ;
+	if (normT.dotPR(crossRHS(tri.edge(0), pointHit - tri[0])) < 0)   return(false) ;
+	if (normT.dotPR(crossRHS(tri.edge(1), pointHit - tri[1])) < 0)   return(false) ;
+	if (normT.dotPR(crossRHS(tri.edge(2), pointHit - tri[2])) < 0)   return(false) ;
 
 	dist = coefHit ;
 	return(true) ;
@@ -139,11 +138,10 @@ template <class T> std::ostream&
 operator<<(std::ostream& os, const triangle_RT<T>& t)
 {
 	os << "t{"/* << typeid(T).name()*/ << t[0] << ", " << t[1] << ", " << t[2] << "}"
-		<< "-> normal: " << t.normal() ; // << "; area: " << t.area() ;
+		<< "-> normal: " << t.normalN() ; // << "; area: " << t.area() ;
 	return(os) ;
 } // class triangle_RT operator << 
 																		// eoc triangle_RT
 
 #endif
-
 // eof triangles_RT.h

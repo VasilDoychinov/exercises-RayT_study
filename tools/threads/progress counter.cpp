@@ -1,9 +1,8 @@
 // progress counter.cpp
 //
 
-// #include <time.h>
-#include "progress counter.h"
 
+#include "progress counter.h"
 
 																		// class cl_KERNEL
 cl_KERNEL::cl_KERNEL(std::function<void(std::future<void> p, size_t)> service, size_t l)
@@ -32,7 +31,15 @@ th_counter(std::future<void> fo, size_t lapse)
 	while (stopSignaled(std::ref(fo), lapse) == false) {
 		cout << "> " ;
 	}
-	cout << "> Done: " << std::setprecision(3) << (mDuration_sec(mClock::now() - t0)).count() << " s";
+	cout << std::setprecision(3) << (mDuration_sec(mClock::now() - t0)).count() << " s";
 } // th_kernel()
+
+
+bool is_task_ready(const std::future<void>* result) {
+	return(result->valid() ? (result->wait_for(std::chrono::milliseconds{0}) == std::future_status::ready)
+						  : false
+		   ) ;
+} // is_task_ready()
+
 
 // eof progress counter.cpp

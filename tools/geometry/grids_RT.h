@@ -33,7 +33,6 @@ using std::endl ;
 
 #include <utility>
 #include <vector>
-using std::vector ;
 
 #include <functional>
 
@@ -51,7 +50,7 @@ class mGrid2 {
 		using value_type = T ;
 
 	private:
-		vector<T>	_base ;
+		std::vector<T>	_base ;
 
 	public:
 		static constexpr unsigned int	_width = W ;
@@ -60,25 +59,16 @@ class mGrid2 {
 	public:
 		explicit mGrid2() : _base(W * H) {} ;	// the default
 		explicit mGrid2(const T& p) : _base(W * H, p) {} ;
-		~mGrid2() = default ;
-
-		explicit mGrid2(const mGrid2& g) : _base{g._base} {} ;					// Copy & Move constructor
-		mGrid2(mGrid2&& g) noexcept : _base{std::move(g._base)} { g._base.resize(0) ; } ;
-
-		mGrid2& operator =(const mGrid2& g) ;									// Copy assignment
-		mGrid2& operator =(mGrid2&& g) noexcept ;								// Move ...
-
-		mGrid2& operator =(value_type value) ; 
+		// ~mGrid2() = default  all special members = default
 
 		mGrid2_ref<T> operator ()(const mGrid2_slice& slc) ;
-
-		const auto & data() const & { return(_base) ; }
-		// template <unsigned int W, unsigned int H>
-		// friend void grid_to_file(const mGrid2<T,W,H>& gr, std::function<bool(const char *)> f) ;
+		const auto	&	data() const & { return(_base) ; }
+		auto		&	base() &	{ return(_base) ; }
 
 		template <typename T, unsigned int W, unsigned int H>
 			friend std::ostream& operator << (std::ostream& os, const mGrid2<T,W,H>& gr) ;
 
+		// Friends
 		template <typename T> friend class mGrid2_ref ;
 }; // class mGrid2
 
@@ -125,12 +115,16 @@ class mGrid2_ref {	// Bound to mGrid2/seq T: use it ONLY in the scope of those
 		mGrid2_ref& operator =(mGrid2_ref&& ref) noexcept
 					{ _descr = std::move(ref._descr), _pix = std::move(ref._pix), ref._pix = nullptr ; }
 
+		mGrid2_slice descr() { return(_descr) ; }
+
 		template <typename R> void paint(R p) ;
 		template <typename R> void paint(R p, std::function<bool(unsigned int, unsigned int)> pred) ;
 
 		T& operator ()(unsigned int i, unsigned int j) ;	// acces a pixel, No range check
 		T& at(unsigned int i, unsigned int j) ;				// acces a pixel, range check
 
+		template <typename T, typename F, typename V> void
+			friend apply_function(mGrid2_ref<T> rt, F funct, V val) ;
 		template <typename T, typename R, typename F> 
 			friend void apply_binary(mGrid2_ref<T> t, mGrid2_ref<R> s, F f) ;
 		template <typename T, typename R, typename F>
@@ -154,40 +148,10 @@ mGrid2<T, W, H>::operator ()(const mGrid2_slice& slc)
 	assert(!(slc._rnum > _height - slc._start._x)) ;
 	assert(!(slc._step != _width)) ;
 	assert(!(_base.size() != (W * H))) ;
-#else
-	if (slc._start._base[0] >= _height || slc._start._base[1] >= _width)	throw std::range_error("mGrid2: Wrong base") ;
-	if (slc._cnum > _width - slc._start._base[1])						throw std::range_error("mGrid2: Wrong width") ;
-	if (slc._rnum > _height - slc._start._base[0])					throw std::range_error("mGrid2: Wrong height") ;
-	if (slc._step != _width)									throw std::range_error("mGrid2: Wrong step") ;
-	if (_base.size() != (W * H))			throw std::range_error("mGrid2: Wrong SIZE") ;
 #endif
 
 	return(mGrid2_ref<T>(slc, _base.data() + slc.topleft())) ;
 } // mGrid2 operator (slice)
-
-template <typename T, unsigned int W, unsigned int H> mGrid2<T, W, H>&
-mGrid2<T, W, H>::operator =(const mGrid2& gr)
-{
-	_base = gr._base ;
-	return(*this) ;
-} // mGrid2 operator=(&)
-
-template <typename T, unsigned int W, unsigned int H> mGrid2<T, W, H>&
-mGrid2<T, W, H>::operator =(mGrid2&& gr) noexcept
-{
-	_base = std::move(gr._base), gr._base.resize(0) ;
-	return(*this) ;
-} // mGrid2 operator=(&&)
-
-template <typename T, unsigned int W, unsigned int H> mGrid2<T, W, H>&
-mGrid2<T, W, H>::operator =(T val)	// allows the re-use of "moved from"
-{
-	assert(_base.size() == 0) ;
-	vector<T>   temp(_width, _height, val) ;
-	_base = std::move(temp) ;
-	 
-	return(*this) ;
-} // mGrid2 operator =(value_type): for {})
 
 
 template <typename T, unsigned int W, unsigned int H> std::ostream&
@@ -210,11 +174,7 @@ mGrid2_ref<T>::operator ()(unsigned int i, unsigned int j)				// No range check.
 template <typename T> T&
 mGrid2_ref<T>::at(unsigned int i, unsigned int j)				// Range check
 {
-#ifdef _DEF_THROWS
-	if (i >= _descr._rnum || j >= _descr._cnum)     throw std::range_error("___ Grid reference range error") ;
-#else
 	assert(!(i >= _descr._rnum || j >= _descr._cnum)) ;
-#endif
 	return(*(_pix + (i * (_descr._step)) + j)) ;
 } // mGrid2_ref at()
 
@@ -251,17 +211,32 @@ mGrid2_ref<T>::paint(R p, std::function<bool(unsigned int, unsigned int)> pred)
 	}
 } // mGrid2_ref paint(pred)
 
-template <typename T, typename R, typename F> void 
+template <typename T, typename F, typename V> void 
+apply_function(mGrid2_ref<T> rt, F funct, V val)
+{	
+	mGrid2_slice des(rt._descr) ;
+	auto rowLim = (des._rnum) ;
+	auto jump = (des._step - des._cnum) ;
+
+	auto pix_t	= rt._pix ;
+	for ( ; rowLim > 0 ; --rowLim, pix_t += jump) {
+		for (auto colLim = des._cnum ; colLim > 0 ; --colLim, pix_t++) {
+			funct(*pix_t, val) ;
+		}
+	}
+} // mGrid2_ref friend apply_function()
+
+template <typename T, typename R, typename F> void
 apply_binary(mGrid2_ref<T> rt, mGrid2_ref<R> rs, F f)
 {
 	assert(rt._descr == rs._descr) ;
-	
+
 	mGrid2_slice des(rt._descr) ;
 	auto rowLim = (des._rnum) ;
 	auto jump = (des._step - des._cnum) ;
 	auto pix_src = rs._pix ;
-	auto pix_t	= rt._pix ;
-	for ( ; rowLim > 0 ; --rowLim, pix_src += jump, pix_t += jump) {
+	auto pix_t = rt._pix ;
+	for (; rowLim > 0 ; --rowLim, pix_src += jump, pix_t += jump) {
 		for (auto colLim = des._cnum ; colLim > 0 ; --colLim, pix_src++, pix_t++) {
 			*pix_t = (f(*pix_t, *pix_src)) ;
 		}
@@ -330,6 +305,8 @@ operator <<(std::ostream& os, const mGrid2_ref<T>& gr)
 } // mGrid2_ref operator <<
 																		// eoc mGrid2_ref
 
-#endif
+std::vector<mGrid2_slice> slices_for_threads(unsigned int w, unsigned int h) ;
+std::vector<mGrid2_slice> slices_to_render(unsigned int w, unsigned int h, unsigned int slc_number) ;
 
+#endif
 // eof grids_RT.h

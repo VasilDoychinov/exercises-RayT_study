@@ -16,10 +16,11 @@ using std::endl ;
 
 #include <valarray>
 
-// #include "coords_RT.h"
 
-template <typename T>	// ??? measure for performance against V = (T x, T y, T z) and std::vector<>
-class vector_RT {		// defined through std::valarray<>
+template <typename T> class mMatrix ;
+
+template <typename T>	
+class vector_RT {				// V = (T x, T y, T z) performs faster than V{std::valarray<>
 	static_assert(std::is_arithmetic<T>::value, "vector_RT<T>: T must be arithmetic") ;
 	public:
 	using value_type = T ;
@@ -72,6 +73,21 @@ class vector_RT {		// defined through std::valarray<>
 
 		vector_RT operator *(const T u) const			{ return(vector_RT{_x * u, _y * u, _z * u}) ; }
 
+		void multiplyByMatrix(const mMatrix<T>& m)		{ T x, y, z ;
+			x = dotPR(m.col(0)), y = dotPR(m.col(1)), z = dotPR(m.col(2)) ;
+			_x = x, _y = y, _z = z ;
+		}
+		friend vector_RT operator *(const vector_RT<T>& v, const mMatrix<T>& m) { 
+			vector_RT<T> temp{v} ; temp.multiplyByMatrix(m) ; return(temp) ;
+		}
+		/*
+		friend vector_RT operator *(vector_RT<T>&& v, const mMatrix<T>& m) {
+			return((std::move(v)).multiplyByMatrix(m)) ;
+		}
+		friend vector_RT multiplyByMatrix(vector_RT<T>& v, const mMatrix<T>& m) {
+			return(v.multiplyByMatrix(m)) ;
+		}
+		*/
 		// V1 X V2
 		vector_RT crossRHS(const vector_RT& v) const { 
 			return(vector_RT {	_y * (v._z) - _z * (v._y),
@@ -83,6 +99,9 @@ class vector_RT {		// defined through std::valarray<>
 				
 		// Misc
 		template <class T> friend std::ostream& operator<<(std::ostream& os, const vector_RT<T>& v) ;
+
+		// Friends
+		// template <typename T> friend class mMatrix ;
 }; // class vector_RT
 
 																		// vector_RT: templates & inlines

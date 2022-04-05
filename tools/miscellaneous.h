@@ -29,6 +29,11 @@ template <typename T> inline T nINFINITY() { return(std::numeric_limits<T>::max(
 
 inline bool near_zero(float n) { return (abs(n) < fEps) ; }
 inline bool near_zero(double n) { return (abs(n) < dEps) ; }
+
+//   Trigonometric
+const double const_PI = std::acos(-1.) ;      // constexpr auto coef_PI = 3.14159 ;
+const double coef_DEG_PI = const_PI / 180. ;  // constexpr auto coef_DEG_PI = coef_PI / 180. ;
+template <typename T> inline double degs_to_rads(T degs) { return (static_cast<double>(degs * coef_DEG_PI)) ; }
  
 // Chrono, etc
 using mTimeP = decltype(std::chrono::steady_clock::now()) ;
