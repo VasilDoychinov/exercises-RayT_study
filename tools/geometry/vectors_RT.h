@@ -33,11 +33,9 @@ class vector_RT {				// V = (T x, T y, T z) performs faster than V{std::valarray
 		T	_z ;
 	public:
 		explicit vector_RT(T x = 0, T y = 0, T z = 0) : _x{x}, _y{y}, _z{z} {}
-		// vector_RT(const mCoord<T, 3>& p) : _x{p._x}, _y{p._y}, _z{p._z} {}
 		vector_RT(std::initializer_list<T> il) : 
 				_x{*(begin(il))}, _y{*(begin(il) + 1)}, _z{*(begin(il) +2)} { assert(il.size() == 3) ; }
-		// ~vector_RT() = default :                                 skip to enforce default MOVEs
-		// vector_RT(vector_RT&& v) :                               ...             defaults		
+		// all special members  = default
 
 		// Access
 		void extract(T& x, T& y, T& z) const	{ x = _x, y = _y, z = _z ; }

@@ -5,26 +5,31 @@
 #define _DEFS_COLORS_RT_COLORS
 
 #include <iostream>
+#include <valarray>
 
 using CompT = unsigned char ;				// for color components
 
 class mColor {								// (R,G,B)
 	private:
-	CompT	_cR ;
-	CompT	_cG ;
-	CompT	_cB ;
-	public:
-	mColor(CompT r = 0, CompT g = 0, CompT b = 0) : _cR{r}, _cG{g}, _cB{b} {}
-	mColor(const mColor& p) = default ;
-	mColor& operator =(const mColor& p) = default ;
+		// std::valarray<CompT>	_base ;
+		CompT	_cR ; 
+		CompT	_cG ; 
+		CompT	_cB ;
 
-	friend std::ostream& 
-		operator <<(std::ostream& os, const mColor& p) {
-		os << static_cast<short>(p._cR) << "+"
-			<< static_cast<short>(p._cG) << "+"
-			<< static_cast<short>(p._cB) ;
-		return(os) ;
-	}
+	public:
+		
+	public:
+		mColor(CompT r = 0, CompT g = 0, CompT b = 0) : _cR{r}, _cG{g}, _cB{b} {}
+	// all special members	= default
+	//mColor(const mColor& p) = default ;
+	//mColor& operator =(const mColor& p) = default ;
+
+		friend std::ostream&  operator <<(std::ostream& os, const mColor& p) {
+			os << static_cast<short>(p._cR) << "+"
+				<< static_cast<short>(p._cG) << "+"
+				<< static_cast<short>(p._cB) ;
+			return(os) ;
+		}
 }; // class mColor
 
 

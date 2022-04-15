@@ -8,6 +8,7 @@
 //
 
 #include <thread>
+#include <assert.h>
 #include "grids_RT.h"
 
 using std::cout ;
@@ -43,30 +44,26 @@ slices_for_threads(unsigned int w, unsigned int h)
 } // slices_for_threads()
 
 std::vector<mGrid2_slice>		
-slices_to_render(unsigned int w, unsigned int h, unsigned int slc_num)  // horizontal, actually
+slices_to_render(unsigned int w, unsigned int h, unsigned int rn, unsigned int cn)  // 
 {
-	slc_num  = std::max(slc_num, 1 + (std::thread::hardware_concurrency())) ;
+	assert(w % cn == 0 && h % rn == 0) ;
+	rn = h / rn, cn = w / cn ;
 
 	std::vector<mGrid2_slice>	iSlices{} ;
 
-	// int		slc_num = (nTh < 3 ? 1 : nTh - 1) ;   // 'Max concurrent supported' - 1
-	int		row_num{static_cast<int>(h / slc_num)} ;
-
-	int row = 0 ;
-	for (unsigned int i = 0 ; i < slc_num - 1 ; i++, row += row_num) {	// store slices
-		iSlices.push_back(mGrid2_slice(coord_RASTER(row, 0), row_num, w, w)) ; // ??????? h)) ;
+	unsigned int row{0} ;
+	unsigned int col{0} ;
+	
+	for ( ; row < h ; row += rn) {
+		for (col = 0 ; col < w ; col += cn) {
+			iSlices.push_back(mGrid2_slice(coord_RASTER(row, col), rn, cn, w)) ;
+		}
 	}
-	// store the last one with the remaining rows
-	iSlices.push_back(mGrid2_slice(coord_RASTER(row, 0), h - row, w, w)) ;
-
 	iSlices.shrink_to_fit() ;
-	// for (const auto& s : iSlices)   cout << endl << "-ini-- " << s ;
+	// for (const auto& s : iSlices)   cout << endl << "--- slices_to_render: " << s ;
 
 	return(iSlices) ;
 } // slices_for_threads()
-
-
-
 
 
 std::ostream&

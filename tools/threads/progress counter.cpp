@@ -35,10 +35,13 @@ th_counter(std::future<void> fo, size_t lapse)
 } // th_kernel()
 
 
-bool is_task_ready(const std::future<void>* result) {
-	return(result->valid() ? (result->wait_for(std::chrono::milliseconds{0}) == std::future_status::ready)
+bool is_task_ready(const std::future<void>& result) {
+	return(result.wait_for(std::chrono::seconds(0)) != std::future_status::timeout) ;
+	/*
+	return(result.valid() ? (result.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
 						  : false
 		   ) ;
+		   */
 } // is_task_ready()
 
 

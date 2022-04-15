@@ -39,8 +39,10 @@ template <typename T> inline double degs_to_rads(T degs) { return (static_cast<d
 using mTimeP = decltype(std::chrono::steady_clock::now()) ;
 using mClock = typename std::chrono::steady_clock ;
 using mLapse = std::chrono::nanoseconds ;
+using mDuration_ns = std::chrono::duration<double, std::nano> ;
 using mDuration_ms = std::chrono::duration<double, std::milli> ;
 using mDuration_sec = std::chrono::duration<double> ;
+
 
 class mTimer {
 	private:
@@ -100,7 +102,6 @@ class mTimer {
 
 
 time_t show_lapse(const bool fl_start) ;
-
 
 #endif
 // eof miscellaneous.h

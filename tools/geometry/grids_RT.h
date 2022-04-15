@@ -44,7 +44,7 @@ using std::endl ;
 template <typename T> class mGrid2_ref ;
 struct mGrid2_slice ;
 
-template <typename T, unsigned int W, unsigned int H>
+template <typename T>
 class mGrid2 {
 	public:
 		using value_type = T ;
@@ -52,21 +52,22 @@ class mGrid2 {
 	private:
 		std::vector<T>	_base ;
 
-	public:
-		static constexpr unsigned int	_width = W ;
-		static constexpr unsigned int	_height = H ;
+		unsigned int		_W ;
+		unsigned int		_H ;
 
 	public:
-		explicit mGrid2() : _base(W * H) {} ;	// the default
-		explicit mGrid2(const T& p) : _base(W * H, p) {} ;
+		explicit mGrid2(unsigned int W, unsigned int H) : _base(W * H), _W{W}, _H{H} {}
+		// explicit mGrid2(const T& p) : _base(W * H, p) {} ;
 		// ~mGrid2() = default  all special members = default
 
 		mGrid2_ref<T> operator ()(const mGrid2_slice& slc) ;
 		const auto	&	data() const & { return(_base) ; }
 		auto		&	base() &	{ return(_base) ; }
 
-		template <typename T, unsigned int W, unsigned int H>
-			friend std::ostream& operator << (std::ostream& os, const mGrid2<T,W,H>& gr) ;
+		unsigned int W() const {return(_W) ; }
+		unsigned int H() const { return(_H) ; }
+
+		template <typename T> friend std::ostream& operator << (std::ostream& os, const mGrid2<T>& gr) ;
 
 		// Friends
 		template <typename T> friend class mGrid2_ref ;
@@ -139,25 +140,25 @@ class mGrid2_ref {	// Bound to mGrid2/seq T: use it ONLY in the scope of those
 }; // class mGrid2_ref
 
 																		// templates for mGrid2<> follow
-template <typename T, unsigned int W, unsigned int H> mGrid2_ref<T>
-mGrid2<T, W, H>::operator ()(const mGrid2_slice& slc)
+template <typename T> mGrid2_ref<T>
+mGrid2<T>::operator ()(const mGrid2_slice& slc)
 {										// Speed ??? check for complying slice or not
 #ifndef _DEF_THROWS
-	assert(!(slc._start._x >= _height || slc._start._y >= _width)) ;
-	assert(!(slc._cnum > _width - slc._start._y)) ;
-	assert(!(slc._rnum > _height - slc._start._x)) ;
-	assert(!(slc._step != _width)) ;
-	assert(!(_base.size() != (W * H))) ;
+	assert(!(slc._start._x >= _H || slc._start._y >= _W)) ;
+	assert(!(slc._cnum > _W - slc._start._y)) ;
+	assert(!(slc._rnum > _H - slc._start._x)) ;
+	assert(!(slc._step != _W)) ;
+	assert(!(_base.size() != (_W * _H))) ;
 #endif
 
 	return(mGrid2_ref<T>(slc, _base.data() + slc.topleft())) ;
 } // mGrid2 operator (slice)
 
 
-template <typename T, unsigned int W, unsigned int H> std::ostream&
-operator <<(std::ostream& os, const mGrid2<T, W, H>& gr)
+template <typename T> std::ostream&
+operator <<(std::ostream& os, const mGrid2<T>& gr)
 {
-	cout << "-- grid {" << gr._width << ", " << gr._height << "}" ;
+	cout << "-- grid {" << gr.W() << ", " << gr.H() << "}" ;
 	cout << "- holding " << (gr._base).size() << " elements at (" << (gr._base).data() << ")" ;
 	// cout << endl << "--- capacity " << (gr._base).capacity() << ")" << endl ;
 
@@ -306,7 +307,8 @@ operator <<(std::ostream& os, const mGrid2_ref<T>& gr)
 																		// eoc mGrid2_ref
 
 std::vector<mGrid2_slice> slices_for_threads(unsigned int w, unsigned int h) ;
-std::vector<mGrid2_slice> slices_to_render(unsigned int w, unsigned int h, unsigned int slc_number) ;
+std::vector<mGrid2_slice> slices_to_render(unsigned int w, unsigned int h, 
+										   unsigned int rn, unsigned int cn) ;
 
 #endif
 // eof grids_RT.h

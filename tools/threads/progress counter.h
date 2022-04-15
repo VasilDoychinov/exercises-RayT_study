@@ -47,7 +47,7 @@ class cl_KERNEL {
 
 void		th_counter(std::future<void> fo, size_t l) ;
 
-bool		is_task_ready(const std::future<void>* result) ;
+bool		is_task_ready(const std::future<void>& result) ;
 
 #endif
 // eof progress counter.h

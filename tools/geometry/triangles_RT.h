@@ -17,14 +17,11 @@ using std::endl ;
 
 #include <valarray>
 
-#include "../tools/miscellaneous.h"
-
+#include "../miscellaneous.h"
+// #include "miscellaneous.h"
 
 #include "vectors_RT.h"
 
-/*
-#include "../miscellaneous.h"
-*/
 
 template <typename T>	// ??? measure for performance against Tri = (T x, T y, T z) and std::vector<>
 class triangle_RT {		// defined through std::valarray<>
