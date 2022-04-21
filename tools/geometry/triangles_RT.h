@@ -68,7 +68,7 @@ class triangle_RT {		// defined through std::valarray<>
 		friend vector_RT<T> normalN(const triangle_RT& v) { return (v._normalN) ; }
 
 		// Ray intersection
-		bool _ray_hit(const vector_RT<T>& o, const vector_RT<T>& r, T& dist) const ;
+		bool _ray_hit(const vector_RT<T>& o, const vector_RT<T>& r, T& dist, vector_RT<T>& hP) const ;
 
 		// Misc
 		const T area() const { return(length(crossRHS((_base[1] - _base[0]), (_base[2] - _base[0])))
@@ -93,7 +93,8 @@ template <typename T> bool
 ray_hit_triangle(const vector_RT<T>& origin,	// origin
 				 const vector_RT<T>& ray,		// ray (normalized)
 				 const triangle_RT<T>& tri,		// triangle
-				 T& dist						// OUTPUT: distance from origin(if returns (true))
+				 T& dist,						// OUTPUT: distance from origin(if returns (true))
+				 vector_RT<T>& pointHit			// OUTPUT: the hip point
 				)
 {
 
@@ -108,24 +109,24 @@ ray_hit_triangle(const vector_RT<T>& origin,	// origin
 	auto			coefHit { - (dotPR(normT, origin) - dotPR(normT, tri[0])) / dot_NR} ;
 																// cout << "\n_ coefHit= " << coefHit ;
 
-	if (coefHit < 0)			return(false) ;		// triangle is in the back of Origin
+	if (coefHit <= 0)			return(false) ;		// triangle is in the back of Origin
 
-	auto pointHit = origin + (ray * coefHit) ;
+	pointHit = origin + (ray * coefHit) ;			// auto pointHit = origin + (ray * coefHit) ;
 																// cout << "\n_ pointHit= " << pointHit ;
 
 	// inside-outside test(s): test < 0 if pointHit is on the right side: 0, 1, 2
-	if (normT.dotPR(crossRHS(tri.edge(0), pointHit - tri[0])) < 0)   return(false) ;
-	if (normT.dotPR(crossRHS(tri.edge(1), pointHit - tri[1])) < 0)   return(false) ;
-	if (normT.dotPR(crossRHS(tri.edge(2), pointHit - tri[2])) < 0)   return(false) ;
+	if (normT.dotPR(crossRHS(tri.edge(0), pointHit - tri[0])) <= 0)   return(false) ;
+	if (normT.dotPR(crossRHS(tri.edge(1), pointHit - tri[1])) <= 0)   return(false) ;
+	if (normT.dotPR(crossRHS(tri.edge(2), pointHit - tri[2])) <= 0)   return(false) ;
 
 	dist = coefHit ;
 	return(true) ;
 } // class triangle_RT friend ray_hit_triangle
 
 template <typename T> bool
-triangle_RT<T>::_ray_hit(const vector_RT<T>& o, const vector_RT<T>& r, T& dist) const
+triangle_RT<T>::_ray_hit(const vector_RT<T>& o, const vector_RT<T>& r, T& dist, vector_RT<T>& hP) const
 {
-	bool fl = ray_hit_triangle(o, r, *this, dist) ;
+	bool fl = ray_hit_triangle(o, r, *this, dist, hP) ;
 	return(fl) ;
 } // triangle_RT _ray_hit()
 

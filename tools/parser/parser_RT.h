@@ -39,6 +39,10 @@ struct cl_sectionUnit {
         cl_sectionUnit() : _name{}, _addr_start{-1L}, _addr_end{-1L} {}
         // all special members = default (for now)
 
+        bool operator !=(const cl_sectionUnit& su) { 
+            return(_name != su._name || _addr_start != su._addr_start || _addr_end != su._addr_end) ;
+        }
+
     // Friends
         friend class _scope_iter ;
         friend class _data_iter ;
@@ -103,8 +107,108 @@ std::vector<std::string> extract_data(cl_SceneDescr& scene,
                                       const std::string& scope, const std::string& name, 
                                       int ss);
 
-// miscellaneous functions
+// convertion functions
+template <typename T> vector_RT<T>
+vector_from_string(const std::string& str)  // there has to be two ',': defining three numbers 
+{
+    T       mark[3] = {{},} ;
+                                                                            // cout << endl << endl 
+                                                                            // << "___ in vector from_string("
+                                                                            // << str << ")" ;
+    try {
+        size_t  i = 0 ;
+        size_t  count = 0 ;
+        for (size_t j = 0 ; j < str.size() && count < 2 ; j++) {
+            if (str[j] == ',') {
+                mark[count ++] = static_cast<T>(std::stod(str.substr(i, j - i))),
+                    i = j + 1 ;
+            }
+        }
+        if (count < 2)      throw std::runtime_error("___ bad vector descriptor") ;
+        mark[2] = static_cast<T>(std::stod(str.substr(i))) ;
+    } catch (...) { throw ; }
 
+    return(vector_RT<T>(mark[0], mark[1], mark[2])) ;
+} // vector_from_string()
+
+template <typename T> T
+number_from_string(const std::string& str)  // there has to be a ':' - the number starts after it
+{
+    T       number{0} ;
+    size_t  pos = 0 ;
+
+    if ((pos = str.find(":")) != std::string::npos) {
+        number = static_cast<T>(std::stod(str.substr(pos + 1))) ;
+    }
+    return(number) ;
+} // number_from_string()
+
+template <typename T, typename RGB> RGB
+color_from_string(const std::string& str)
+{
+    vector_RT<T> temp{vector_from_string<T>(str)} ; // get the indexes
+    // temp holds the indexes of triangle's vertices in indexes
+    return(RGB{temp[0], temp[1], temp[2]}) ;
+} // color_from_string()
+
+
+#ifdef NO_INDEXING
+
+#include <algorithm>
+
+template <typename T> triangle_RT<T>
+triangle_from_iterator(_data_iter& it_tr, _data_iter& begin_vertices)  // it: assumed to be (ui,ui,ui)
+{
+    // cout << endl << "--- in triangle_from_ITER (i(" << *it_tr << "), at v0{" << *begin_vertices << "})" ;
+    vector_RT<unsigned int> temp{vector_from_string<unsigned int>(*it_tr)} ; // get the indexes
+
+    std::pair<size_t, size_t>    vvv[3] = {std::pair<size_t,size_t>(0, temp[0]),
+                                            std::pair<size_t,size_t>(1, temp[1]),
+                                            std::pair<size_t,size_t>(2, temp[2])
+    } ;
+    std::sort(begin(vvv), end(vvv), [](std::pair<size_t, size_t> i, std::pair<size_t, size_t> j)->bool
+                {return(i.second < j.second); }) ;
+    // vvv holds the indexes in "vertices" in ascending order 
+
+    // The vertice indexes are supposedly: sorted here.
+    auto            iter = begin_vertices ; auto iter_end = iter.limit() ;
+    size_t          ind_vertice = 0 ;
+    vector_RT<T>    vertices[3] = {vector_RT<T>{}, vector_RT<T>{}, vector_RT<T>{}} ;
+
+    for (int i = 0 ; i < _countof(vvv) ; i++) {
+        // cout << endl << "--- loading vertice:" 
+        // << vvv[i].second << 
+        // " for triangle descr.: " << temp ;
+        // fwd_iterator: position it to the current vertice index
+        for (; ind_vertice < (vvv[i]).second && iter != iter_end ; ++iter, ind_vertice++) ;
+        // load the vector      
+        vertices[(vvv[i]).first] = std::move(vector_RT<T>(vector_from_string<T>(*iter))) ;
+    }
+
+    return(triangle_RT<T>{vertices[0], vertices[1], vertices[2]}) ;
+} // triangle_from_iterator()
+#endif
+
+template <typename T> triangle_RT<T>
+triangle_from_indexes(_data_iter& it_tr, std::vector<long>& indexes)  // it: assumed to be (ui,ui,ui)
+{
+    // cout << endl << "--- in triangle_from_ITER (i(" << *it_tr << "), at v0{" << *begin_vertices << "})" ;
+
+    vector_RT<unsigned int> temp{vector_from_string<unsigned int>(*it_tr)} ; // get the indexes
+    // temp holds the indexes of triangle's vertices in indexes
+
+    vector_RT<T>    vertices[3] = {vector_RT<T>{}, vector_RT<T>{}, vector_RT<T>{}} ;
+
+    for (int i = 0 ; i < 3 ; i++) {
+        auto iter = std::move(it_tr + indexes[temp[i]]) ; // a bit of cheating but _iters are of same scope
+        vertices[i] = std::move(vector_from_string<T>(*iter)) ;
+    }
+
+    return(triangle_RT<T>{vertices[0], vertices[1], vertices[2]}) ;
+} // triangle_from_indexes()
+
+
+// miscellaneous functions
 long _f_read(int fh, long pos, void *buff, size_t count) ;
 long move_to(int fh, const std::string& list_delim, unsigned char& delim) ;
 long move_to(int fh, const unsigned char delim) ;

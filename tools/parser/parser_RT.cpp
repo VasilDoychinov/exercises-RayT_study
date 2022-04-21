@@ -67,8 +67,10 @@ _data_iter::_data_iter(int fh, const cl_sectionUnit& su, int ss)
 {
 	if (_fh < 0)			return ;		// that's it
 
-	assert(_addr_c < su._addr_end) ;
-	if (_lseek(_fh, _addr_c, SEEK_SET) <= 0)	throw std::runtime_error("___ descriptor: position error") ;
+	if (_s_unit != cl_sectionUnit{}) {
+		assert(_addr_c < su._addr_end) ;
+		if (_lseek(_fh, _addr_c, SEEK_SET) <= 0)	throw std::runtime_error("___ descriptor: () position error") ;
+	}
 } // _data_iter()
 
 _data_iter&
@@ -95,7 +97,9 @@ _data_iter::operator *()
 	long			addr{-1L} ;
 	unsigned char	c_buff{} ;
 
-	if (_lseek(_fh, _addr_c, SEEK_SET) < 0L)	throw std::runtime_error("___ descriptor: position error") ;
+	if (!(_s_unit != cl_sectionUnit{}))     return(value_type{}) ;
+
+	if (_lseek(_fh, _addr_c, SEEK_SET) < 0L)	throw std::runtime_error("___ descriptor: * position error") ;
 	for (addr = _addr_c ; addr < _s_unit._addr_end ; addr++) {
 		if (_read(_fh, &c_buff, 1) != 1)		throw std::runtime_error("___ descriptor: read error") ;
 		if (std::isgraph(c_buff))   break ;
@@ -111,7 +115,7 @@ _data_iter::operator *()
 	}
 
 	// move _fh back to the iteration point
-	if (_lseek(_fh, _addr_c, SEEK_SET) <= 0)	throw std::runtime_error("___ descriptor: position error") ;
+	if (_lseek(_fh, _addr_c, SEEK_SET) <= 0)	throw std::runtime_error("___ descriptor: ** position error") ;
 	return (std::move(_data)) ; 
 } // _data_iter operator *
 																		// eoc iterators
@@ -123,7 +127,7 @@ cl_SceneDescr::data(const std::string& scope, const std::string& vn) const
 	auto iter = begin_scope(scope) ;
 	auto iter_e = iter.limit() ; //end_scope(scope) ;
 
-	for ( ; iter != iter_e ; ++iter) {
+	for ( ; iter != iter_e ; ++iter)   {																											
 		if ((iter->_name).find(vn) != std::string::npos)   return(*iter) ;
 	}
 	return(cl_sectionUnit{}) ;
@@ -132,13 +136,7 @@ cl_SceneDescr::data(const std::string& scope, const std::string& vn) const
 cl_sectionUnit
 cl_SceneDescr::data(_scope_iter s_iter, const std::string& vn) const
 {
-	auto iter = begin_scope(s_iter.id()) ;
-
-	for ( ; iter != iter.limit() ; ++ iter) {
-											// cout << endl << "--- checking for: " << vn << " in: " << *iter ;
-		if ((iter->_name).find(vn) != std::string::npos)   return(*iter) ;
-	}
-	return(cl_sectionUnit{}) ;
+	return(data(s_iter.id(), vn)) ;
 } // cl_SceneDescr data()
 
 std::vector<long>
@@ -173,7 +171,7 @@ cl_SceneDescr::show_sections(std::ostream& os) const //,const std::vector<cl_sec
 	if (_fh == -1)    { os << endl << "--- <" << _fname << "> not active" ; return(os) ;}
 
 	unsigned char open_ch{} ;			// consistency check: must match and be either '[]' or '{}'
-	unsigned char close_ch{} ;
+	unsigned char close_ch{} ;			// except for _data fields(scopes): " and ,/}/]
 
 	os << endl << "- # of sections found: " << _sections.size() ;
 	for (auto s : _sections) {
@@ -190,7 +188,6 @@ cl_SceneDescr::_check(long from_pos, const std::string& name_parent, unsigned ch
 {
 	if (_fh == -1L)		throw std::runtime_error("___ <" + _fname + "> not active") ;
 
-	// char			w_buff[512] ;		// to read more than a Byte into
 	unsigned char	c_buff{} ;			// to read a byte into
 
 	std::vector<cl_sectionUnit>		sections{} ;		// fill it
@@ -227,11 +224,12 @@ cl_SceneDescr::_check(long from_pos, const std::string& name_parent, unsigned ch
 			if (_f_read(_fh, w_addr, _wbuff, name_len) != name_len)
 														throw std::runtime_error("___ parse: read error") ;
 			_wbuff[name_len] = 0 ;  // the terminating '\0'
-
+			fl_name = true ;		// indicate: straight away might be a data section ending with closing ]/}
 			// move to opening of a new section or, to closing of an old one
 			if ((addr = move_to(_fh, "{[]},", c_buff)) == -1L)
 														throw std::runtime_error("___ parse: wrong format") ;
 			if (c_buff == '{' || c_buff == '[') {
+				fl_name = false ;  // clear
 				w_sec._name = name_parent + '/' + std::string(_wbuff) ;
 
 				w_sec._addr_start = addr ;
@@ -246,7 +244,19 @@ cl_SceneDescr::_check(long from_pos, const std::string& name_parent, unsigned ch
 				w_sec._addr_end = addr ;
 				sections.push_back(std::move(w_sec)), w_sec = cl_sectionUnit{} ;
 			} else if ((c_buff == ']' && start_ch == '[') || (c_buff == '}' && start_ch == '{')) {
+				if (fl_name) {
+					fl_name = false ;
+					w_sec._name = name_parent + '/' + std::string(_wbuff) ;
+					w_sec._addr_start = w_addr, w_sec._addr_end = addr ;
+					sections.push_back(std::move(w_sec)), w_sec = cl_sectionUnit{} ;
+					// now we break UP
+				}
 				break ;
+			} else if (c_buff == ',') {
+				fl_name = false ;
+				w_sec._name = name_parent + '/' + std::string(_wbuff) ;
+				w_sec._addr_start = w_addr, w_sec._addr_end = addr ;
+				sections.push_back(std::move(w_sec)), w_sec = cl_sectionUnit{} ;
 			}
 		} else if (c_buff == '{' || c_buff == '[') {		// opening: go DOWN - but NO NAME														
 			w_sec._name = name_parent + '/' + std::to_string(noname_counter++) ; // + "" ;
@@ -278,16 +288,16 @@ extract_data(cl_SceneDescr& scene,              // the Scene
 	std::vector<std::string>    values{} ;
 	cl_sectionUnit              s_unit{scene.data(scope,name)} ;
 
-	auto iter = scene.begin_data(s_unit, ss) ;
-	auto iter_e = iter.limit() ;
+	if (s_unit != cl_sectionUnit{})	{
+		auto iter = scene.begin_data(s_unit, ss) ;
+		auto iter_e = iter.limit() ;
 
-	// cout << endl << endl << endl << "--- load data from section: " << s_unit ;
-	for (int i = 0 ; iter != iter_e ; ++iter, i++) {
-		// cout << endl << "> scope<" << iter_b.scope() << "> --- section #" << i << ": " << *iter_b ;
-		// cout << endl << "--- found #" << i << ": " << *iter ;
-		values.push_back(std::move(*iter)) ;
+		for (int i = 0 ; iter != iter_e ; ++iter, i++) {
+			// cout << endl << "> scope<" << iter_b.scope() << "> --- section #" << i << ": " << *iter_b ;
+			// cout << endl << "--- found #" << i << ": " << *iter ;
+			values.push_back(std::move(*iter)) ;
+		}
 	}
-
 	return(values) ;
 } // friend cl_SceneDescr() extract_data()
 																		// eoc cl_SceneDescr

@@ -36,7 +36,7 @@ th_counter(std::future<void> fo, size_t lapse)
 
 
 bool is_task_ready(const std::future<void>& result) {
-	return(result.wait_for(std::chrono::seconds(0)) != std::future_status::timeout) ;
+	return(result.wait_for(std::chrono::seconds(0)) == std::future_status::ready) ;
 	/*
 	return(result.valid() ? (result.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
 						  : false
