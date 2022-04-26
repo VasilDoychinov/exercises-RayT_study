@@ -44,14 +44,14 @@ class light_RT {
         light_RT(size_t i, const ray_RT& r, const mAlbedo& c) : _intensity{i}, _position{r}, _color{c} {}
         // all special members  = default
 
-        const ray_RT& position() const& { return(_position) ; }
-        size_t        intensity() const { return(_intensity) ; }
-        mAlbedo       color() const { return(_color) ; }
+        const ray_RT& position() const& { return _position ; }
+        size_t        intensity() const { return _intensity ; }
+        mAlbedo       color() const { return _color ; }
 
         friend std::ostream& operator <<(std::ostream& os, const light_RT& li) {
             os << "light{intensity: " << li._intensity << ", position: " << li._position 
-                << ", colour: " << li._color << '}' ;
-            return(os) ;
+                << ", albedo: " << li._color << '}' ;
+            return os ;
         }
 }; // class light_RT
 
@@ -72,13 +72,13 @@ class cl_seqLightsRT {
         template <typename T> void add(T&& light) { _base.push_back(std::forward<T>(light)) ; }
         void remove(size_t ind) { _base.erase(cbegin(_base) + ind) ; }
 
-        const_iterator begin_lights() { return(_base.cbegin()) ; }
-        const_iterator end_lights() { return(_base.cend()) ; }
+        const_iterator begin_lights() { return _base.cbegin() ; }
+        const_iterator end_lights() { return _base.cend() ; }
 
         friend std::ostream& operator <<(std::ostream& os, const cl_seqLightsRT& ls) {
             os << endl << ": # of lights: " << ls._base.size() ;
             for (const auto& li : ls._base)   cout << endl << "--- " << li ;
-            return(os) ;
+            return os ;
         }
 }; // class cl_seqLightsRT 
 

@@ -22,7 +22,7 @@ std::ostream&
 operator <<(std::ostream& os, const camera_RT& cam)
 {
     os << "cam{pos" << cam._position << ", transf" << cam._mTransform ;
-    return(os) ;
+    return os ;
 } // cameras_RT friend operator <<
 
 // eof cameras_RT.cpp

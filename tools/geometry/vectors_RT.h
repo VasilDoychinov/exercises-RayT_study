@@ -39,14 +39,14 @@ class vector_RT {				// V = (T x, T y, T z) performs faster than V{std::valarray
 
 		// Access
 		void extract(T& x, T& y, T& z) const	{ x = _x, y = _y, z = _z ; }
-		T& operator [](int i) { return((i == 0 ? _x : (i == 1 ? _y : _z))) ; }
-		const T& operator [](int i) const { return((i == 0 ? _x : (i == 1 ? _y : _z))) ; }
+		T& operator [](int i) { return i == 0 ? _x : (i == 1 ? _y : _z) ; }
+		const T& operator [](int i) const { return i == 0 ? _x : (i == 1 ? _y : _z) ; }
 
 		// Characteristics
-		T norm() const		{ return (_x * _x + _y * _y + _z * _z) ; }
-		T length() const	{ return(std::sqrt(norm())) ; }
-		friend T norm(const vector_RT& v)   { return (v.norm()) ; }
-		friend T length(const vector_RT& v) { return (v.length()) ; }
+		T norm() const		{ return _x * _x + _y * _y + _z * _z ; }
+		T length() const	{ return std::sqrt(norm()) ; }
+		friend T norm(const vector_RT& v)   { return v.norm() ; }
+		friend T length(const vector_RT& v) { return v.length() ; }
 
 		// Normalizing
 		vector_RT& normalize() { 
@@ -54,29 +54,35 @@ class vector_RT {				// V = (T x, T y, T z) performs faster than V{std::valarray
 			auto norm = length() ; assert(norm > 0) ;
 			norm = (1 / norm), _x *= norm, _y *= norm, _z *= norm ;
 			/*}*/ 
-			return(*this) ;
+			return *this ;
 		}
-		friend vector_RT& normalize(vector_RT& v)	{ return(v.normalize()) ; }
-		friend vector_RT  unitV(const vector_RT& v) { vector_RT t{v} ; t.normalize() ; return(t) ; }
-		friend vector_RT  unitV(vector_RT&& vm)		{ vm.normalize() ; return(std::move(vm)) ; }
+		friend vector_RT& normalize(vector_RT& v)	{ return v.normalize() ; }
+		friend vector_RT  unitV(const vector_RT& v) { vector_RT t{v} ; t.normalize() ; return t ; }
+		friend vector_RT  unitV(vector_RT&& vm)		{ vm.normalize() ; return std::move(vm) ; }
 
 		// V1 . V2
-		T dotPR(const vector_RT& v) const { return(_x * v._x + _y * v._y + _z * v._z) ; }
-		friend T dotPR(const vector_RT& v0, const vector_RT& v1) { return(v0.dotPR(v1)) ; }
+		T dotPR(const vector_RT& v) const { return _x * v._x + _y * v._y + _z * v._z ; }
+		friend T dotPR(const vector_RT& v0, const vector_RT& v1) { return v0.dotPR(v1) ; }
+
+		// Comparisons
+		bool operator !=(const vector_RT& v) const { return _x != v._x || _y != v._y || _z != v._z ; }
 
 		// Operators (MOVE ???)
-		vector_RT operator +(const vector_RT & v) const	{ return(vector_RT{_x + v._x, _y + v._y, _z + v._z}) ; }
-		vector_RT operator -(const vector_RT & v) const	{ return(vector_RT{_x - v._x, _y - v._y, _z - v._z}) ; }
-		vector_RT operator -() const					{ return(vector_RT{-_x, -_y, -_z}) ; }
+		vector_RT operator +(const vector_RT & v) const	{ return vector_RT{_x + v._x, _y + v._y, _z + v._z} ;}
+		vector_RT operator -(const vector_RT & v) const	{ return vector_RT{_x - v._x, _y - v._y, _z - v._z} ;}
+		vector_RT operator -() const					{ return vector_RT{-_x, -_y, -_z} ; }
 
-		vector_RT operator *(const T u) const			{ return(vector_RT{_x * u, _y * u, _z * u}) ; }
+		vector_RT operator *(const T u) const			{ return vector_RT{_x * u, _y * u, _z * u} ; }
 
 		void multiplyByMatrix(const mMatrix<T>& m)		{ T x, y, z ;
 			x = dotPR(m.col(0)), y = dotPR(m.col(1)), z = dotPR(m.col(2)) ;
 			_x = x, _y = y, _z = z ;
 		}
 		friend vector_RT operator *(const vector_RT<T>& v, const mMatrix<T>& m) { 
-			vector_RT<T> temp{v} ; temp.multiplyByMatrix(m) ; return(temp) ;
+			vector_RT<T> temp{v} ; temp.multiplyByMatrix(m) ; return temp ;
+		}
+		friend vector_RT operator /(const T c, const vector_RT& v) {
+			return vector_RT{c / v._x, c / v._y, c / v._z} ;
 		}
 		/*
 		friend vector_RT operator *(vector_RT<T>&& v, const mMatrix<T>& m) {
@@ -88,12 +94,12 @@ class vector_RT {				// V = (T x, T y, T z) performs faster than V{std::valarray
 		*/
 		// V1 X V2
 		vector_RT crossRHS(const vector_RT& v) const { 
-			return(vector_RT {	_y * (v._z) - _z * (v._y),
+			return vector_RT {	_y * (v._z) - _z * (v._y),
 								_z * (v._x) - _x * (v._z),
 								_x * (v._y) - _y * (v._x)
-							 }) ;
+							 } ;
 		}
-		friend vector_RT crossRHS(const vector_RT& v0, const vector_RT& v1) { return(v0.crossRHS(v1)) ; }
+		friend vector_RT crossRHS(const vector_RT& v0, const vector_RT& v1) { return v0.crossRHS(v1) ; }
 				
 		// Misc
 		template <class T> friend std::ostream& operator<<(std::ostream& os, const vector_RT<T>& v) ;
@@ -107,7 +113,7 @@ template <class T> std::ostream&
 operator<<(std::ostream& os, const vector_RT<T>& v)
 {
 	os /*<< '{' << typeid(T).name()*/ << '(' << v[0] << "," << v[1] << "," << v[2] << ")" ; //}" ;
-	return(os) ;
+	return os ;
 } // class vector_RT operator << 
 																		// eoc vector_RT
 

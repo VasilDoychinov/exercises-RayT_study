@@ -47,16 +47,16 @@ class camera_RT {
         void roll(RT_default_type degs) { _transform(Z_rotation(degs)) ; }
         
         // a camera in WS
-        camera_RT camera_to_position(const ray_RT& pos) { _translate(pos) ; return(*this) ; }
+        camera_RT camera_to_position(const ray_RT& pos) { _translate(pos) ; return *this ; }
         
         // Adjust a 'primary' ray to a camera: the origin is camera._position
-        ray_RT camera_ray(ray_RT& ray) { ray_RT t{ray} ; t.multiplyByMatrix(_mTransform) ; return(t) ;}
-        friend ray_RT  camera_ray(ray_RT&& ray, const camera_RT& c) { return(std::move(ray) * c._mTransform) ; }
+        ray_RT camera_ray(ray_RT& ray) { ray_RT t{ray} ; t.multiplyByMatrix(_mTransform) ; return t ;}
+        friend ray_RT  camera_ray(ray_RT&& ray, const camera_RT& c) { return std::move(ray) * c._mTransform ; }
 
         // Position 
-        const ray_RT& position() const & { return(_position) ; }
+        const ray_RT& position() const & { return _position ; }
         // Matrix
-        const matrix_RT& crm() const & { return(_mTransform) ; }
+        const matrix_RT& crm() const & { return _mTransform ; }
 
         friend std::ostream& operator <<(std::ostream& os, const camera_RT& cam) ;
 }; // class camera_RT
@@ -64,37 +64,37 @@ class camera_RT {
 // Movements: translation -- ??? check for passing rvalues
 inline camera_RT camera_to_position(const ray_RT& ray, camera_RT camera = {}) { 
     camera._translate(ray) ;
-    return(camera) ;
+    return camera ;
 }
 inline camera_RT dolly(RT_default_type units, camera_RT camera = {}) { 
     camera._translate(ray_RT{0, 0, units}) ; 
-    return(camera) ;
+    return camera ;
 } // dolly()
 
 inline camera_RT boom(RT_default_type units, camera_RT camera = {}) {
     camera._translate(ray_RT{0, units, 0}) ; 
-    return(camera) ;
+    return camera ;
 } // boom()
 
 inline camera_RT truck(RT_default_type units, camera_RT camera = {}) { 
     camera._translate(ray_RT{units, 0, 0}) ;
-    return(camera) ;
+    return camera ;
 } // truck()
 
 // Movements: linear transformation -- ??? check for passing rvalues
 inline camera_RT pan(RT_default_type degs, camera_RT camera = {}) { 
     camera._transform(Y_rotation(degs)) ;
-    return(camera) ;
+    return camera ;
 } // pan()
 
 inline camera_RT tilt(RT_default_type degs, camera_RT camera = {}) { 
     camera._transform(X_rotation(degs)) ;
-    return(camera) ;
+    return camera ;
 } // tilt()
 
 inline camera_RT roll(RT_default_type degs, camera_RT camera = {}) {
     camera._transform(Z_rotation(degs)) ;
-    return(camera) ;
+    return camera ;
 } // roll()
 
 
@@ -109,12 +109,12 @@ class batchesCameras {
 
     std::string operator [](int id) {
         for (auto p : _batches) {
-            if (id >= (p.first).first && id <= (p.first).second)      return(p.second) ;
+            if (id >= (p.first).first && id <= (p.first).second)      return p.second ;
         }
-        return(std::string{}) ;
+        return std::string{} ;
     }
-    unsigned int start(unsigned int i) { return((i>=0 && i<_batches.size()) ? (_batches[i]).first.first :0);}
-    unsigned int end(unsigned int i) { return((i>=0 && i<_batches.size()) ? (_batches[i]).first.second :0);}
+    unsigned int start(unsigned int i) { return (i>=0 && i<_batches.size()) ? (_batches[i]).first.first :0;}
+    unsigned int end(unsigned int i) { return (i>=0 && i<_batches.size()) ? (_batches[i]).first.second :0;}
 
 }; // struct batchesCameras
 

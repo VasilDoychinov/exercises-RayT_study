@@ -60,28 +60,28 @@ class mMatrix {
 		// ~mGrid2() = default ; :: use defaults for all special members
 				
 		// Access
-		T operator ()(unsigned int i, unsigned int j) const { return(_base[i * _colsN + j]) ; }
-		T at(unsigned int i, unsigned int j) const 			{ return(_base[i * _colsN + j]) ; }
-		T& at(unsigned int i, unsigned int j)				{ return(_base[i * _colsN + j]) ; }
+		T operator ()(unsigned int i, unsigned int j) const { return _base[i * _colsN + j] ; }
+		T at(unsigned int i, unsigned int j) const 			{ return _base[i * _colsN + j] ; }
+		T& at(unsigned int i, unsigned int j)				{ return _base[i * _colsN + j] ; }
 
 		vector_RT<T> row(unsigned int i) const {	assert(i < _rowsN) ;
 			i *= _colsN ;
-			return(vector_RT<T>{_base[i], _base[i + 1], _base[i + 2]}) ;
+			return vector_RT<T>{_base[i], _base[i + 1], _base[i + 2]} ;
 		}
 		vector_RT<T> col(unsigned int j) const {	assert(j < _colsN) ;
-			return(vector_RT<T>{_base[j], _base[j + _colsN], _base[j + _colsN + _colsN]}) ;
+			return vector_RT<T>{_base[j], _base[j + _colsN], _base[j + _colsN + _colsN]} ;
 		}
 		
 		// Operations
 		mMatrix& multiplyByMatrix(const mMatrix& m) ;						// changes (this)
 		friend mMatrix operator *(const mMatrix& m1, const mMatrix& m2) {
-			mMatrix<T> temp{m1} ; return(temp.multiplyByMatrix(m2)) ;
+			mMatrix<T> temp{m1} ; return temp.multiplyByMatrix(m2) ;
 		}
 
 		// Friends
 		friend bool operator ==(const mMatrix& m1, const mMatrix& m2) { 
-			for (int i = 0 ; i < _rowsN * _colsN ; i++) if ((m1._base)[i] != (m2._base)[i]) return(false) ;
-			return(true) ;
+			for (int i = 0 ; i < _rowsN * _colsN ; i++) if ((m1._base)[i] != (m2._base)[i]) return false ;
+			return true ;
 		}
 		
 		// class vector_RT<T> ;
@@ -112,7 +112,7 @@ mMatrix<T>::multiplyByMatrix(const mMatrix& m)
 	}
 	_copy_base(temp) ;			// private: if POD or NOT POD
 	
-	return(*this) ;
+	return *this ;
 } // mMatrix multiplyByMatrix()
 
 template <typename T> std::ostream& 
@@ -121,7 +121,7 @@ operator << (std::ostream& os, const mMatrix<T>& m)
 	os << "{r0" << m.row(0) << ", r1" << m.row(1) << ", r2" << m.row(2) << '}' << " - ";
 	// os << "{c0" << m.col(0) << ", c1" << m.col(1) << ", c2" << m.col(2) << '}' ;
 				
-	return(os) ;
+	return os ;
 } // mMatrix friend operator <<
 
 
@@ -133,12 +133,11 @@ X_rotation(float degs)
 	float	c_cos{std::cosf(rads)} ;
 	float	c_sin{std::sinf(rads)} ;
 
-	return(mMatrix<float>	{ 
+	return mMatrix<float>	{ 
 							{1.f, 0.f, 0.f},
 							{0.f, c_cos, -c_sin}, //{c_cos, 0.f, -c_sin},
 							{0.f, c_sin, c_cos}   //{c_sin, 0.f, c_cos}
-							}
-	) ;
+							} ;
 } // rotate_around_X
 
 inline mMatrix<float>
@@ -148,12 +147,11 @@ Y_rotation(float degs)
 	float	c_cos{std::cosf(rads)} ;
 	float	c_sin{std::sinf(rads)} ;
 
-	return(mMatrix<float>	{
+	return mMatrix<float>	{
 							{c_cos, 0.f, -c_sin},
 							{0.f, 1.f, 0.f},
 							{c_sin, 0.f, c_cos}
-							}
-	) ;
+							} ;
 } // rotate_around_Y
 
 inline mMatrix<float>
@@ -163,12 +161,11 @@ Z_rotation(float degs)
 	float	c_cos{std::cosf(rads)} ;
 	float	c_sin{std::sinf(rads)} ;
 
-	return(mMatrix<float>	{
+	return mMatrix<float>	{
 							{c_cos, -c_sin, 0.f},	// {c_cos, 0.f, -c_sin},
 							{c_sin, c_cos, 0.f},	// {c_sin, 0.f, c_cos},
 							{0.f, 0.f, 1.f}
-							}
-	) ;
+							} ;
 } // rotate_around_Z
 
 

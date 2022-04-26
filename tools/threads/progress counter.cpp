@@ -20,7 +20,7 @@ cl_KERNEL::~cl_KERNEL()
 bool inline
 stopSignaled(const std::future<void>& fo, size_t lapse)
 {
-	return(fo.wait_for(std::chrono::milliseconds(lapse)) == std::future_status::timeout ? false : true) ;
+	return fo.wait_for(std::chrono::milliseconds(lapse)) == std::future_status::timeout ? false : true ;
 } // stopSignaled()
 
 void
@@ -36,7 +36,7 @@ th_counter(std::future<void> fo, size_t lapse)
 
 
 bool is_task_ready(const std::future<void>& result) {
-	return(result.wait_for(std::chrono::seconds(0)) == std::future_status::ready) ;
+	return result.wait_for(std::chrono::seconds(0)) == std::future_status::ready ;
 	/*
 	return(result.valid() ? (result.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
 						  : false

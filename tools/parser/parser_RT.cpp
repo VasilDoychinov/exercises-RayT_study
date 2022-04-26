@@ -23,7 +23,7 @@ std::ostream&
 operator <<(std::ostream& os, const cl_sectionUnit& su)
 {
 	os << "(" << su._name << "[" << su._addr_start << ", " << su._addr_end << "])" ;
-	return(os) ;
+	return os ;
 } // cl_sectionUnit operator <<
 																		// eoc cl_sectionUnit
 					
@@ -58,7 +58,7 @@ _scope_iter::operator ++()
 			if ((_it->_name.find('/', pos + _scn.size() + 1)) == std::string::npos)	break ;
 		}
 	}
-	return(*this) ;
+	return *this ;
 } // _scope_iter operator ++
 
 
@@ -88,7 +88,7 @@ _data_iter::operator ++() // move _fh after defined _step_size (in delimiters)
 	}
 
 	_addr_c = (addr < _s_unit._addr_end) ? addr + 1 : addr ; // where _fh is
-	return(*this) ;
+	return *this ;
 } // _data_iter operator ++
 
 _data_iter::value_type
@@ -97,7 +97,7 @@ _data_iter::operator *()
 	long			addr{-1L} ;
 	unsigned char	c_buff{} ;
 
-	if (!(_s_unit != cl_sectionUnit{}))     return(value_type{}) ;
+	if (!(_s_unit != cl_sectionUnit{}))     return value_type{} ;
 
 	if (_lseek(_fh, _addr_c, SEEK_SET) < 0L)	throw std::runtime_error("___ descriptor: * position error") ;
 	for (addr = _addr_c ; addr < _s_unit._addr_end ; addr++) {
@@ -116,7 +116,7 @@ _data_iter::operator *()
 
 	// move _fh back to the iteration point
 	if (_lseek(_fh, _addr_c, SEEK_SET) <= 0)	throw std::runtime_error("___ descriptor: ** position error") ;
-	return (std::move(_data)) ; 
+	return std::move(_data) ; 
 } // _data_iter operator *
 																		// eoc iterators
 																		
@@ -125,18 +125,18 @@ cl_sectionUnit
 cl_SceneDescr::data(const std::string& scope, const std::string& vn) const
 {
 	auto iter = begin_scope(scope) ;
-	auto iter_e = iter.limit() ; //end_scope(scope) ;
+	auto iter_e = iter.limit() ;
 
 	for ( ; iter != iter_e ; ++iter)   {																											
-		if ((iter->_name).find(vn) != std::string::npos)   return(*iter) ;
+		if ((iter->_name).find(vn) != std::string::npos)   return *iter ;
 	}
-	return(cl_sectionUnit{}) ;
+	return cl_sectionUnit{} ;
 } // cl_SceneDescr data()
 
 cl_sectionUnit
 cl_SceneDescr::data(_scope_iter s_iter, const std::string& vn) const
 {
-	return(data(s_iter.id(), vn)) ;
+	return data(s_iter.id(), vn) ;
 } // cl_SceneDescr data()
 
 std::vector<long>
@@ -148,7 +148,7 @@ cl_SceneDescr::index_data(data_iterator iter)
 		v_addr.push_back(std::move(iter.addr())) ;
 	}
 
-	return(v_addr) ;
+	return v_addr ;
 } // cl_SceneDescr data()
 
 
@@ -158,17 +158,17 @@ cl_SceneDescr::activate()
 	if (_fh == -1) {
 		errno_t err = _sopen_s(&_fh, _fname.c_str(), _O_BINARY | _O_RDONLY,
 							   _SH_DENYRW, _S_IREAD | _S_IWRITE) ;
-		if (err != 0) { _fh = -1 ; return(false) ; }
+		if (err != 0) { _fh = -1 ; return false ; }
 		if (_sections.empty())		_sections = this->_check(0L, "") ;
-		if (_sections.empty())	{ _close(_fh), _fh = -1 ; return(false) ; }
+		if (_sections.empty())	{ _close(_fh), _fh = -1 ; return false ; }
 	}
-	return(true) ;
+	return true ;
 } // cl_SceneDescr activate()
 
 std::ostream&
 cl_SceneDescr::show_sections(std::ostream& os) const //,const std::vector<cl_sectionUnit>& ss)
 {
-	if (_fh == -1)    { os << endl << "--- <" << _fname << "> not active" ; return(os) ;}
+	if (_fh == -1)    { os << endl << "--- <" << _fname << "> not active" ; return os ; }
 
 	unsigned char open_ch{} ;			// consistency check: must match and be either '[]' or '{}'
 	unsigned char close_ch{} ;			// except for _data fields(scopes): " and ,/}/]
@@ -180,7 +180,7 @@ cl_SceneDescr::show_sections(std::ostream& os) const //,const std::vector<cl_sec
 		os << open_ch << s._addr_start << ", " << s._addr_end << close_ch ;
 	}
 
-	return(os) ;
+	return os ;
 } // cl_SceneDescr show_sections()
 
 std::vector<cl_sectionUnit>
@@ -198,7 +198,7 @@ cl_SceneDescr::_check(long from_pos, const std::string& name_parent, unsigned ch
 	long	addr{from_pos} ;
 	long	addr_eof{_lseek(_fh, 0L, SEEK_END)} ;
 	
-	if (addr_eof <= 1L)					return(sections) ;
+	if (addr_eof <= 1L)					return sections ;
 	// assert(addr < addr_eof) ;
 																		// cout << endl << "___ <" << _fname 
 																		// << "> within: [" << addr << ", " 
@@ -275,7 +275,7 @@ cl_SceneDescr::_check(long from_pos, const std::string& name_parent, unsigned ch
 		}
 	}
 	
-	return(sections) ;	// the so far initiated -> could use it in case of an error as well
+	return sections ;	// the so far initiated -> could use it in case of an error as well
 } // cl_SceneDescr:: _check()
 
 
@@ -298,7 +298,7 @@ extract_data(cl_SceneDescr& scene,              // the Scene
 			values.push_back(std::move(*iter)) ;
 		}
 	}
-	return(values) ;
+	return values ;
 } // friend cl_SceneDescr() extract_data()
 																		// eoc cl_SceneDescr
 
@@ -306,12 +306,12 @@ extract_data(cl_SceneDescr& scene,              // the Scene
 long
 _f_read(int fh, long pos, void *buff, size_t count)
 {
-	if (_lseek(fh, pos, SEEK_SET) == -1L)			return(-1L) ;
+	if (_lseek(fh, pos, SEEK_SET) == -1L)			return -1L ;
 
 	int   bw = _read(fh, static_cast<char *>(buff), count) ;
-	if (bw == count)								return(count) ;
+	if (bw == count)								return count ;
 
-	return(-1L) ;
+	return -1L ;
 } // cl_SceneDescr:: _f_read()
 
 // all move_to() family: read from the current position until eof or a delimiter found
@@ -320,9 +320,9 @@ long move_to(int fh, const unsigned char ch)   // read from the current position
 	char   c_buff{} ;
 	for (long addr = _lseek(fh, 0L, SEEK_CUR) ; ; addr++) {
 		if (_read(fh, static_cast<char *>(&c_buff), 1) != 1)	break ;
-		if (c_buff == ch)   return(addr) ;
+		if (c_buff == ch)   return addr ;
 	}
-	return(-1L) ;
+	return -1L ;
 } // move_to()
 
 long move_to(int fh, const std::string& list_delim, unsigned char& delim )
@@ -330,9 +330,9 @@ long move_to(int fh, const std::string& list_delim, unsigned char& delim )
 	char   c_buff{} ;
 	for (long addr = _lseek(fh, 0L, SEEK_CUR) ; ; addr++) {
 		if (_read(fh, static_cast<char *>(&c_buff), 1) != 1)	break ;
-		if (list_delim.find(c_buff) != std::string::npos) {	delim = c_buff ; return(addr) ; }
+		if (list_delim.find(c_buff) != std::string::npos) {	delim = c_buff ; return addr ; }
 	}
-	return(-1L) ;
+	return -1L ;
 } // move_to(list)
 																		// end of Miscellaneous
 

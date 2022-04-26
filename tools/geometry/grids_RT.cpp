@@ -40,29 +40,30 @@ slices_for_threads(unsigned int w, unsigned int h)
 	iSlices.shrink_to_fit() ;
 	// for (const auto& s : iSlices)   cout << endl << "-ini-- " << s ;
 
-	return(iSlices) ;
+	return iSlices ;
 } // slices_for_threads()
 
 std::vector<mGrid2_slice>		
 slices_to_render(unsigned int w, unsigned int h, unsigned int rn, unsigned int cn)  // 
 {
-	assert(w % cn == 0 && h % rn == 0) ;
+	// assert(w % cn == 0 && h % rn == 0) ;
 	rn = h / rn, cn = w / cn ;
 
 	std::vector<mGrid2_slice>	iSlices{} ;
 
-	unsigned int row{0} ;
-	unsigned int col{0} ;
-	
-	for ( ; row < h ; row += rn) {
-		for (col = 0 ; col < w ; col += cn) {
-			iSlices.push_back(mGrid2_slice(coord_RASTER(row, col), rn, cn, w)) ;
+	for (unsigned int row = 0 ; row < h ; row += rn) {
+		for (unsigned int col = 0 ; col < w ; col += cn) {
+			iSlices.push_back(mGrid2_slice(coord_RASTER(row, col), 
+										   std::min(rn, h - row), 
+										   std::min(cn, w - col),
+										   w)) ;
 		}
 	}
 	iSlices.shrink_to_fit() ;
-	// for (const auto& s : iSlices)   cout << endl << "--- slices_to_render: " << s ;
-
-	return(iSlices) ;
+												// for (const auto& s : iSlices)
+												//		   cout << endl << "--- slices_to_render: " << s ;
+												// throw std::runtime_error("___ partial completion") ;
+	return iSlices ;
 } // slices_for_threads()
 
 
@@ -73,8 +74,7 @@ operator <<(std::ostream& os, const mGrid2_slice& sl)
 		<< " + " << sl._rnum << " + " << sl._cnum
 		<< ", step: " << sl._step << "}" ;
 
-	return(os) ;
+	return os ;
 } // mGrid2_slice operator <<
 																		// eoc mGrid2_slice
-
 // eof grids_RT.cpp

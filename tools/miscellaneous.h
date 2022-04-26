@@ -16,7 +16,7 @@
 
 // Types
 #include <type_traits>
-template <typename T1, typename T2> inline bool Is_same(T1, T2) { return(std::is_same<T1, T2>::value) ; }
+template <typename T1, typename T2> inline bool Is_same(T1, T2) { return std::is_same<T1, T2>::value ; }
 
 
 // Math
@@ -25,15 +25,15 @@ constexpr double dEps = std::numeric_limits<double>::min() * 100 ;
 constexpr float  fEps = std::numeric_limits<float>::min() * 100 ;
 constexpr double dINFINITY = std::numeric_limits<double>::max() ;   
 constexpr double fINFINITY = std::numeric_limits<float>::max() ;
-template <typename T> inline T nINFINITY() { return(std::numeric_limits<T>::max()) ; }
+template <typename T> inline T nINFINITY() { return std::numeric_limits<T>::max() ; }
 
-inline bool near_zero(float n) { return (abs(n) < fEps) ; }
-inline bool near_zero(double n) { return (abs(n) < dEps) ; }
+inline bool near_zero(float n) { return abs(n) < fEps ; }
+inline bool near_zero(double n) { return abs(n) < dEps ; }
 
 //   Trigonometric
 const double const_PI = std::acos(-1.) ;      // constexpr auto coef_PI = 3.14159 ;
 const double coef_DEG_PI = const_PI / 180. ;  // constexpr auto coef_DEG_PI = coef_PI / 180. ;
-template <typename T> inline double degs_to_rads(T degs) { return (static_cast<double>(degs * coef_DEG_PI)) ; }
+template <typename T> inline double degs_to_rads(T degs) { return static_cast<double>(degs * coef_DEG_PI) ; }
  
 // Chrono, etc
 using mTimeP = decltype(std::chrono::steady_clock::now()) ;
@@ -86,8 +86,8 @@ class mTimer {
 			}
 		}
 	
-		bool isRunning() const { return(_isRunning) ; }
-		mLapse elapsed() const { return(_elapsed) ; }
+		bool isRunning() const { return _isRunning ; }
+		mLapse elapsed() const { return _elapsed ; }
 
 		friend std::ostream& operator <<(std::ostream& os, mTimer& mt) {
 			mt.stop() ;
@@ -96,7 +96,7 @@ class mTimer {
 			os << ", last break("
 					<< (static_cast<mDuration_ms>(mt._wps.back())).count() << ')' ;
 			mt.start(false) ;
-			return(os) ;
+			return os ;
 		}
 }; // class mTimer
 

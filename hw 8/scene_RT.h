@@ -1,6 +1,7 @@
 // scene_RT.H: to define a Scene
 //		- Types
 //			- mAtom_RT:	defines the atom of an Object: NOT parameterized for now - based on triangle_RT
+//			- cl_objectRT: ... an object, seq Atmos; colour; box to accelerate 
 //			- mObjects_RT: ...   an Object is a seq mAtom_RT: FURTHER might be {Atom<T ... types>}
 //                        provides link to the scene descriptor, iterators, etc
 //				- all special members: default 
@@ -11,6 +12,8 @@
 //			- mScene_RT: ...    a Scene, linked to mObjetcs_RT->scene descriptor
 //              - includes: camera(s), etc
 //				- operator(): does the job (ray tracing)
+//				- shadow colours, etc: in_sahdow(), shadow_color()
+// 
 //
 
 
@@ -28,10 +31,13 @@
 #include <functional>
 #include <algorithm>
 
+#include <atomic>
+
 #include "../tools/color_RT.h"
 
 #include "../tools/geometry/vectors_RT.h"
 #include "../tools/geometry/triangles_RT.h"
+#include "../tools/geometry/shapes_RT.h"
 #include "../tools/geometry/grids_RT.h"
 #include "../tools/parser/parser_RT.h"
 
@@ -40,6 +46,7 @@
 
 #include "vectors_RT.h"
 #include "triangles_RT.h"
+#include "shapes_RT.h"
 #include "grids_RT.h"
 #include "parser_RT.h"
 */
@@ -47,18 +54,22 @@
 #include "rays_RT.h"
 #include "lights_RT.h"
 
+extern size_t		atomChecks ;
+extern size_t		boxMisses ;
+extern size_t		boxChecks ;
+
 
 class mAtom_RT   {
 	public:
 		using value_type = triangle_RT<RT_default_type> ;
 
 	private:
-		triangle_RT<float>			_shape{} ;
-		mColor						_col{} ;
+		value_type		_shape{} ;
+		// mColor			_col{} ;
 		// std::function<mColor(const ray_RT& o, const ray_RT& ray)>  _fcol{} ;
 
 	public:
-		mAtom_RT() : _shape{}, _col{} {}
+		mAtom_RT() : _shape{} {}	// mAtom_RT() : _shape{}, _col{} {}
 		mAtom_RT(_data_iter& tri, _data_iter& vert_beg) ;
         mAtom_RT(_data_iter& tri, std::vector<long>& vertices) ;
         
@@ -67,18 +78,20 @@ class mAtom_RT   {
 
 		// Visibility
 		bool _ray_hit(const ray_RT& orig, const ray_RT& ray, float& dist, ray_RT& hP) const {
-			return(_shape._ray_hit(orig, ray, dist, hP)) ;
+			// atomChecks++ ;
+			return _shape._ray_hit(orig, ray, dist, hP) ;
 		}
 
-		void set_color(mColor c) { _col = c ; }
-		mColor color() const { return(_col) ; }
-		mColor color(const ray_RT& pix, std::function<float(float)> f) const { 
-			return(mColor(255, 0, 0)) ; // vect_to_CRT(pix, f)) ; 
-		}
+		/* void set_color(mColor c) { _col = c ; }
+		 mColor color() const { return _col ; }
+		mColor color(const ray_RT& pix, std::function<float(float)> f) const {
+			return mColor(255, 0, 0) ; // vect_to_CRT(pix, f)) ; 
+		}*/
 
 		// Access (CONST)
-		const value_type& shape() const & { return(_shape) ; }
+		const value_type& shape() const & { return _shape ; }
 }; // class mAtom_RT
+
 
 class cl_objectRT {
 	public:
@@ -89,17 +102,23 @@ class cl_objectRT {
 	private:
 		std::vector<mAtom_RT>	_base{} ;
 		mAlbedo					_alb ;
+	
+		obox_RT					_box{} ;
 
 	public:
-		cl_objectRT() : _base{}, _alb{} {}
-		cl_objectRT(std::vector<value_type>&& b, mAlbedo&& a) : _base{std::move(b)}, _alb{std::move(a)} {}
+		cl_objectRT() : _base{}, _alb{}, _box{} {}
+		cl_objectRT(std::vector<value_type>&& b, mAlbedo&& a, obox_RT&& ob) 
+				: _base{std::move(b)}, _alb{std::move(a)}, _box{std::move(ob)} {}
 		// all special members  = default
 
-		size_t	size() { return(_base.size()) ; }
-		mAlbedo albedo() const { return(_alb) ; }
+		size_t	size() { return _base.size() ; }
+		mAlbedo albedo() const { return _alb ; }
+		const obox_RT& box() const & { return _box ; }
 
-		const_iterator obj_begin() const { return(_base.cbegin()) ; }
-		const_iterator obj_end() const { return(_base.cend()) ; }
+		bool	box_hit(const ray_RT& orig, const ray_RT& ray) const ;
+
+		const_iterator obj_begin() const { return _base.cbegin() ; }
+		const_iterator obj_end() const { return _base.cend() ; }
 }; // classs cl_objectRT
 
 class mObjects_RT {
@@ -112,7 +131,7 @@ class mObjects_RT {
         using const_iterator = std::vector<value_type>::const_iterator ;
 
     public:
-	std::vector <cl_objectRT>	_base{} ;  // mAtom_RT >> _base{} ;
+		std::vector <cl_objectRT>	_base{} ; 
 
     public:
         mObjects_RT() : _base{} {}
@@ -123,24 +142,33 @@ class mObjects_RT {
 
 class mScene_RT { // : public cl_SceneDescr {
 	private:
-		mObjects_RT *				_objects{nullptr} ;     // what's been loaded
-		// size_t						_obj_num{} ;	        // the real number of objects
+		mObjects_RT *				_objects{nullptr} ;     // the objects loaded
 
-		//vector_RT<RT_default_type>	_cam{} ;
         cl_seqLightsRT*             _lights{} ;
         mAlbedo						_clrb{} ;
 		RT_default_type				_shadowBias ;
+
+		struct _s_conc {	size_t		_num_of_threads ;
+							// size_t		_slc_assign{0} ;// index of the next slice to assign
+							// std::atomic<int>		_slc_assign{0} ;// index of the next slice to assign
+							std::vector<slcRays>	_slices ;		// slices prepared
+
+							_s_conc() : _num_of_threads{}, _slices{} {}
+		} _set_concurrency ;
 
 	public:
 		
 	public:
 		mScene_RT(cl_SceneDescr * sd, mObjects_RT *objs, cl_seqLightsRT* lights) ;
 		// all special members = default
-		
-		mColor	operator ()(ray_RT ray, const ray_RT& camPos) ; // vector_RT<RT_default_type>& camera) ;
+
+		void	set_concurrency(cl_SceneDescr * sd, unsigned int W, unsigned int H) ;
+		const _s_conc& get_concurrency() const & { return _set_concurrency ; }
+
+		mColor	operator ()(ray_RT ray, const ray_RT& camPos) ;
 
 		std::pair<mObjects_RT::const_iterator, ray_RT::value_type>
-			ray_hit(size_t id_iter, const ray_RT& orig, const ray_RT& ray, ray_RT& hP) ; // const ;
+			ray_hit(size_t id_iter, const ray_RT& orig, const ray_RT& ray, ray_RT& hP) ;
 
 		bool	in_shadow(const mAtom_RT& tr, const ray_RT& hP, const ray_RT& ld, double l_dist) ;
 		mColor	shadow_color(const mAtom_RT& tr, ray_RT& hP, const mAlbedo& alb) ;

@@ -100,7 +100,7 @@ render_RT::add_Cameras(std::function<camera_RT(RT_default_type, camera_RT)> func
 	for (; stepsNum > 0 ; stepsNum--) {
 		this->add_camera(cam = funct(step, cam)) ;
 	}
-	return(cam) ;
+	return cam ;
 } // render_RT add_Cameras()
 
 
@@ -125,13 +125,13 @@ render_RT::_transform_rays(unsigned int cameraId) // match _ray to cameraId(simp
 	// transform _rays to cameraId
 	_calculate_rays(cameraId) ;
 
-	return(cameraId) ;
+	return cameraId ;
 } // render_RT:: _transform_rays()
 
 unsigned int
 render_RT::next_camera()	// returns the ID: leaves it ready for rendering, etc 
 {
-	if (_currentCamera + 1 >= _origins.size())		return(_origins.size()) ;
+	if (_currentCamera + 1 >= _origins.size())		return _origins.size() ;
 	_currentCamera++ ;
 
 	cout << endl << "> switching to camera #" << _currentCamera << " of " << _origins.size() ;
@@ -142,7 +142,7 @@ render_RT::next_camera()	// returns the ID: leaves it ready for rendering, etc
 
 	cout << "> ready after: " << std::setprecision(3)
 		<< (mDuration_sec(mClock::now() - t0)).count() << " s";
-	return(_currentCamera) ;
+	return _currentCamera ;
 } // render_RT next_camera()
 
 
@@ -185,7 +185,7 @@ show_cameras(std::ostream& os, render_RT& r)
 	}
 
 	os << endl << "--- eol cameras---" ;
-	return(os) ;
+	return os ;
 } // render_RT friend show_cameras() 
 
 
@@ -205,7 +205,7 @@ operator <<(std::ostream& os, render_RT& r)
 	os << "   " << rays_ref(0, 0) ; os << "   " << rays_ref(0, r._rays.W() - 1) << endl ;
 	os << "   " << rays_ref(r._rays.H() - 1, 0) ; os << "   " << rays_ref(r._rays.H() - 1, r._rays.W() - 1) ;
 
-	return(os) ;
+	return os ;
 } // render_RT friend operator <<
 
 

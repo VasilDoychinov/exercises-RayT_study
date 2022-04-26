@@ -37,20 +37,20 @@ class _scope_iter {     // iterates with a scope: from {} to next {}
         _scope_iter(const std::vector<cl_sectionUnit>& ss, const std::string& scope) ;
         // all special members = default
 
-        _scope_iter limit() { _scope_iter temp(*this) ; temp._it = temp._it_end ; return(temp) ; }
-        reference operator *() { return ((*_it)) ; }
-        pointer   operator ->() { return(&(*_it)) ; }
+        _scope_iter limit() { _scope_iter temp(*this) ; temp._it = temp._it_end ; return temp ; }
+        reference operator *() { return  *_it ; }
+        pointer   operator ->() { return &(*_it) ; }
 
         _scope_iter& operator ++() ;
         // const _scope_iter operator ++(int) { _scope_iter tmp(*this) ; ++(*this) ; return(tmp) ; }    
 
         bool operator !=(const _scope_iter& ri) {
             if (_scn != ri._scn)                throw std::range_error("___ scope mismatch") ;
-            return(_it != ri._it) ;
+            return _it != ri._it ;
         }
 
-        const std::string& scope() const & { return(_scn) ; }
-        const std::string& id() const & { return(_it->_name) ; }
+        const std::string& scope() const & { return _scn ; }
+        const std::string& id() const & { return _it->_name ; }
 
         // Friends ...
 }; // class _scope_iter
@@ -83,17 +83,17 @@ class _data_iter {     // iterates within {} by a defined step
         _data_iter(int fh, const cl_sectionUnit& su, int ss) ;
         // all special members = default
 
-        _data_iter limit() { _data_iter temp(*this) ; temp._addr_c = _s_unit._addr_end ; return(temp) ; }
+        _data_iter limit() { _data_iter temp(*this) ; temp._addr_c = _s_unit._addr_end ; return temp ; }
 
         value_type operator *() ;
 
         _data_iter& operator ++() ;
-        _data_iter  operator +(long addr) { _data_iter t{*this} ; t._addr_c = addr ; return(t) ; }
+        _data_iter  operator +(long addr) { _data_iter t{*this} ; t._addr_c = addr ; return t ; }
         //const _data_iter operator ++(int) { _data_iter tmp(*this) ; ++(*this) ; return(tmp) ; }
 
-        bool operator !=(const _data_iter& ri) { return(_addr_c != ri._addr_c) ; }
+        bool operator !=(const _data_iter& ri) { return _addr_c != ri._addr_c ; }
 
-        long addr() const { return(_addr_c) ; } // &((static_cast<node_VAL<DTy>*>(p_node))->m_val)) ; }
+        long addr() const { return _addr_c ; } // &((static_cast<node_VAL<DTy>*>(p_node))->m_val)) ; }
 
         // Friends ...
 

@@ -1,0 +1,72 @@
+{
+	"settings": {
+		"background_color": [
+			0, 0.5, 0
+		],
+		"shadow_bias": 1e-4,
+		"image_settings": {
+			"width": 1920,
+			"height": 1080
+		}
+	},
+
+	"concurrency": {
+		"#_of_threads": 200,
+		"#_of_horizontal_cuts":30,
+		"#_of_vertical_cuts":40
+	},
+	
+	"camera": {
+		"matrix": [
+			1, 0, 0,
+			0, 1, 0,
+			0, 0, 1
+		],
+		
+		"position": [
+			0, 0, 0
+		]
+	},
+	
+	"lights": [
+		{
+			"intensity": 100,
+			"position": [
+				0, 1.5, -3
+			],
+			"albedo": [
+				1., .4, 0.2
+                        ]
+		}
+	],
+	
+	"objects": [
+		{		
+			"colour":[0.5,0.5,0.5],
+			"vertices": [
+				-1.5, -1, -1.5,
+				1.5, -1, -1.5,
+				-1.5, -1, -4.5,
+				1.5, -1, -4.5
+			],
+			
+			"triangles": [
+				0, 1, 2,
+				3, 2, 1
+			]
+		},
+		{	
+			"use_box": yes,	
+			"colour":[1.,.6,.2],
+			"vertices": [
+				-0.5, 0, -2.5,
+				0.5, 0, -2.5,
+				0, 0.2, -3
+			],
+			
+			"triangles": [
+				0, 1, 2
+			]			
+		}
+	]
+}

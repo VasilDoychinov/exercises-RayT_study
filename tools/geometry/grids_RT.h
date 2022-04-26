@@ -58,14 +58,14 @@ class mGrid2 {
 	public:
 		explicit mGrid2(unsigned int W, unsigned int H) : _base(W * H), _W{W}, _H{H} {}
 		// explicit mGrid2(const T& p) : _base(W * H, p) {} ;
-		// ~mGrid2() = default  all special members = default
+		// all special members  = default
 
 		mGrid2_ref<T> operator ()(const mGrid2_slice& slc) ;
-		const auto	&	data() const & { return(_base) ; }
-		auto		&	base() &	{ return(_base) ; }
+		const auto	&	data() const & { return _base ; }
+		auto		&	base() &	{ return _base ; }
 
-		unsigned int W() const {return(_W) ; }
-		unsigned int H() const { return(_H) ; }
+		unsigned int W() const {return _W ; }
+		unsigned int H() const { return _H ; }
 
 		template <typename T> friend std::ostream& operator << (std::ostream& os, const mGrid2<T>& gr) ;
 
@@ -86,9 +86,9 @@ struct mGrid2_slice {		// might outlive a Grid
 	mGrid2_slice(const mGrid2_slice& msl) = default ;
 	mGrid2_slice& operator =(const mGrid2_slice& msl) = default ;
 
-	size_t topleft() const 	{ return(_start._x * _step + _start._y) ; } // mGrid2_slice offset()
+	size_t topleft() const 	{ return _start._x * _step + _start._y ; } // mGrid2_slice offset()
 	bool operator ==(const mGrid2_slice& s) {
-		return(_start == s._start && _rnum == s._rnum && _cnum == s._cnum && _step == s._step) ;
+		return _start == s._start && _rnum == s._rnum && _cnum == s._cnum && _step == s._step ;
 	}
 	friend std::ostream& operator <<(std::ostream&, const mGrid2_slice&) ;
 }; // struct mGrid2_slice 
@@ -116,7 +116,7 @@ class mGrid2_ref {	// Bound to mGrid2/seq T: use it ONLY in the scope of those
 		mGrid2_ref& operator =(mGrid2_ref&& ref) noexcept
 					{ _descr = std::move(ref._descr), _pix = std::move(ref._pix), ref._pix = nullptr ; }
 
-		mGrid2_slice descr() { return(_descr) ; }
+		mGrid2_slice descr() { return _descr ; }
 
 		template <typename R> void paint(R p) ;
 		template <typename R> void paint(R p, std::function<bool(unsigned int, unsigned int)> pred) ;
@@ -142,16 +142,14 @@ class mGrid2_ref {	// Bound to mGrid2/seq T: use it ONLY in the scope of those
 																		// templates for mGrid2<> follow
 template <typename T> mGrid2_ref<T>
 mGrid2<T>::operator ()(const mGrid2_slice& slc)
-{										// Speed ??? check for complying slice or not
-#ifndef _DEF_THROWS
+{		
 	assert(!(slc._start._x >= _H || slc._start._y >= _W)) ;
 	assert(!(slc._cnum > _W - slc._start._y)) ;
 	assert(!(slc._rnum > _H - slc._start._x)) ;
 	assert(!(slc._step != _W)) ;
 	assert(!(_base.size() != (_W * _H))) ;
-#endif
 
-	return(mGrid2_ref<T>(slc, _base.data() + slc.topleft())) ;
+	return mGrid2_ref<T>(slc, _base.data() + slc.topleft()) ;
 } // mGrid2 operator (slice)
 
 
@@ -160,23 +158,22 @@ operator <<(std::ostream& os, const mGrid2<T>& gr)
 {
 	cout << "-- grid {" << gr.W() << ", " << gr.H() << "}" ;
 	cout << "- holding " << (gr._base).size() << " elements at (" << (gr._base).data() << ")" ;
-	// cout << endl << "--- capacity " << (gr._base).capacity() << ")" << endl ;
 
-	return(os) ;
+	return os ;
 } // mGrid2 operator <<
 			 
 																		// class mGrid2_ref
 template <typename T> inline T&
 mGrid2_ref<T>::operator ()(unsigned int i, unsigned int j)				// No range check.
 {
-	return(*(_pix + (i * (_descr._step)) + j)) ;
+	return *(_pix + (i * (_descr._step)) + j) ;
 } // mGrid2_ref operator ()
 
 template <typename T> T&
 mGrid2_ref<T>::at(unsigned int i, unsigned int j)				// Range check
 {
 	assert(!(i >= _descr._rnum || j >= _descr._cnum)) ;
-	return(*(_pix + (i * (_descr._step)) + j)) ;
+	return *(_pix + (i * (_descr._step)) + j) ;
 } // mGrid2_ref at()
 
 template <typename T> 
@@ -302,7 +299,7 @@ operator <<(std::ostream& os, const mGrid2_ref<T>& gr)
 		<< ": " << gr._descr
 		<< endl << "--- data starts at (" << gr._pix << ")" << endl ;
 
-	return(os) ;
+	return os ;
 } // mGrid2_ref operator <<
 																		// eoc mGrid2_ref
 

@@ -33,13 +33,12 @@ class cl_KERNEL {
 
 		cl_KERNEL(cl_KERNEL&& k) noexcept : _thr{std::move(k._thr)}, _pro{std::move(k._pro)} {}
 		cl_KERNEL& operator = (cl_KERNEL&& k) noexcept {
-														// cout << "\n___ localTh = &&" ;
 			_thr = std::move(k._thr), _pro = std::move(k._pro) ;
-			return(*this) ;
+			return *this ;
 		}
 
-		std::thread::id get_id() const { return(_thr.get_id()) ; }
-		bool			joinable() const { return(_thr.joinable()) ; }
+		std::thread::id get_id() const { return _thr.get_id() ; }
+		bool			joinable() const { return _thr.joinable() ; }
 		void			stop() { _pro.set_value() ; }
 		void			join() { _thr.join() ; }
 }; // cl_KERNEL

@@ -40,7 +40,7 @@ struct cl_sectionUnit {
         // all special members = default (for now)
 
         bool operator !=(const cl_sectionUnit& su) { 
-            return(_name != su._name || _addr_start != su._addr_start || _addr_end != su._addr_end) ;
+            return _name != su._name || _addr_start != su._addr_start || _addr_end != su._addr_end ;
         }
 
     // Friends
@@ -59,7 +59,7 @@ class cl_SceneDescr {
 
     private:
         std::string     _fname{} ;
-        int             _fh ;           // To be atomic
+        int             _fh ; 
 
         std::vector<cl_sectionUnit> _sections{} ;
         char                        _wbuff[512] = {0,} ; // just a buffer to read into
@@ -77,19 +77,19 @@ class cl_SceneDescr {
         bool activate() ;
         void deactivate() { if (_fh != -1) { _close(_fh), _fh = -1L ; } }
         
-        const std::string& name() const& { return(_fname) ; }
-        const size_t       size() const { return(_sections.size()) ; }
+        const std::string& name() const& { return _fname ; }
+        const size_t       size() const { return _sections.size() ; }
 
         std::ostream& show_sections(std::ostream& os) const ;
 
         // Data scopes
         cl_sectionUnit data(const std::string& scope, const std::string& name) const ;
         cl_sectionUnit data(_scope_iter it, const std::string& name) const ;
-        iterator begin_scope(const std::string& s_name) const { return(_scope_iter(_sections, s_name)) ; }
+        iterator begin_scope(const std::string& s_name) const { return _scope_iter(_sections, s_name) ; }
         //iterator end_scope(const std::string& s_name) const { _scope_iter i(_sections,s_name);return(i.limit());}
 
-        data_iterator begin_data(const cl_sectionUnit& su, int ss) const { return(_data_iter(_fh, su, ss)) ; }
-        data_iterator end_data(const cl_sectionUnit& su) const { _data_iter t(-1, su, 0) ; return(t.limit()) ; }
+        data_iterator begin_data(const cl_sectionUnit& su, int ss) const { return _data_iter(_fh, su, ss) ; }
+        data_iterator end_data(const cl_sectionUnit& su) const { _data_iter t(-1, su, 0) ; return t.limit() ; }
         std::vector<long> index_data(data_iterator) ;
 
         // Friends
@@ -128,7 +128,7 @@ vector_from_string(const std::string& str)  // there has to be two ',': defining
         mark[2] = static_cast<T>(std::stod(str.substr(i))) ;
     } catch (...) { throw ; }
 
-    return(vector_RT<T>(mark[0], mark[1], mark[2])) ;
+    return vector_RT<T>(mark[0], mark[1], mark[2]) ;
 } // vector_from_string()
 
 template <typename T> T
@@ -140,7 +140,7 @@ number_from_string(const std::string& str)  // there has to be a ':' - the numbe
     if ((pos = str.find(":")) != std::string::npos) {
         number = static_cast<T>(std::stod(str.substr(pos + 1))) ;
     }
-    return(number) ;
+    return number ;
 } // number_from_string()
 
 template <typename T, typename RGB> RGB
@@ -148,7 +148,7 @@ color_from_string(const std::string& str)
 {
     vector_RT<T> temp{vector_from_string<T>(str)} ; // get the indexes
     // temp holds the indexes of triangle's vertices in indexes
-    return(RGB{temp[0], temp[1], temp[2]}) ;
+    return RGB{temp[0], temp[1], temp[2]} ;
 } // color_from_string()
 
 
@@ -167,7 +167,7 @@ triangle_from_iterator(_data_iter& it_tr, _data_iter& begin_vertices)  // it: as
                                             std::pair<size_t,size_t>(2, temp[2])
     } ;
     std::sort(begin(vvv), end(vvv), [](std::pair<size_t, size_t> i, std::pair<size_t, size_t> j)->bool
-                {return(i.second < j.second); }) ;
+                {return i.second < j.second ; }) ;
     // vvv holds the indexes in "vertices" in ascending order 
 
     // The vertice indexes are supposedly: sorted here.
@@ -185,7 +185,7 @@ triangle_from_iterator(_data_iter& it_tr, _data_iter& begin_vertices)  // it: as
         vertices[(vvv[i]).first] = std::move(vector_RT<T>(vector_from_string<T>(*iter))) ;
     }
 
-    return(triangle_RT<T>{vertices[0], vertices[1], vertices[2]}) ;
+    return triangle_RT<T>{vertices[0], vertices[1], vertices[2]} ;
 } // triangle_from_iterator()
 #endif
 
@@ -204,7 +204,7 @@ triangle_from_indexes(_data_iter& it_tr, std::vector<long>& indexes)  // it: ass
         vertices[i] = std::move(vector_from_string<T>(*iter)) ;
     }
 
-    return(triangle_RT<T>{vertices[0], vertices[1], vertices[2]}) ;
+    return triangle_RT<T>{vertices[0], vertices[1], vertices[2]} ;
 } // triangle_from_indexes()
 
 
