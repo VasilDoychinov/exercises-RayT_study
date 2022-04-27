@@ -118,9 +118,10 @@ ray_hit_triangle(const vector_RT<T>& origin,	// origin
 																// cout << "\n_ pointHit= " << pointHit ;
 
 	// inside-outside test(s): test < 0 if pointHit is on the right side: 0, 1, 2
-	if (normT.dotPR(crossRHS(tri.edge(0), pointHit - tri[0])) <= 0)   return false ;
-	if (normT.dotPR(crossRHS(tri.edge(1), pointHit - tri[1])) <= 0)   return false ;
-	if (normT.dotPR(crossRHS(tri.edge(2), pointHit - tri[2])) <= 0)   return false ;
+	// auto	wd = normT.dotPR(crossRHS(tri.edge(0), pointHit - tri[0])) ;
+	if (normT.dotPR(crossRHS(tri.edge(0), pointHit - tri[0])) < 0)   return false ;
+	if (normT.dotPR(crossRHS(tri.edge(1), pointHit - tri[1])) < 0)   return false ;
+	if (normT.dotPR(crossRHS(tri.edge(2), pointHit - tri[2])) < 0)   return false ;
 
 	dist = coefHit ;
 	return true ;
