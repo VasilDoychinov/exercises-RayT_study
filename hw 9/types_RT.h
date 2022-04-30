@@ -9,6 +9,7 @@
 
 #include "../tools/geometry/grids_RT.h"
 #include "../tools/geometry/vectors_RT.h"
+#include "../tools/geometry/triangles_RT.h"
 #include "../tools/geometry/matrices_RT.h"
 #include "../tools/geometry/shapes_RT.h"
 #include "../tools/color_RT.h"
@@ -16,6 +17,7 @@
 /*
 #include "grids_RT.h"
 #include "vectors_RT.h"
+#include "triangles_RT.h"
 #include "matrices_RT.h"
 #include "shapes_RT.h"
 #include "color_RT.h"
@@ -25,6 +27,7 @@ using RT_duration = std::chrono::nanoseconds ;
 
 using	RT_default_type = float ;
 using	ray_RT          = vector_RT<RT_default_type> ;
+using	ray_HP          = s_hitPoint<RT_default_type> ;
 using   obox_RT         = box_RT<RT_default_type> ;
 using   matrix_RT       = mMatrix<RT_default_type> ;
 using	slcRays         = mGrid2_slice ;

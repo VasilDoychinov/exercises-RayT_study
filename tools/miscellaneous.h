@@ -21,8 +21,8 @@ template <typename T1, typename T2> inline bool Is_same(T1, T2) { return std::is
 
 // Math
 #include <limits>
-constexpr double dEps = std::numeric_limits<double>::min() * 100 ;
-constexpr float  fEps = std::numeric_limits<float>::min() * 100 ;
+constexpr double dEps = std::numeric_limits<double>::min() * 10 ; //* 100 ;  // 1.e-8 ;
+constexpr float  fEps = std::numeric_limits<float>::min() * 10 ; // * 100 ;
 constexpr double dINFINITY = std::numeric_limits<double>::max() ;   
 constexpr double fINFINITY = std::numeric_limits<float>::max() ;
 template <typename T> inline T nINFINITY() { return std::numeric_limits<T>::max() ; }

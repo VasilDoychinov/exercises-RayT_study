@@ -8,20 +8,24 @@
 #include <valarray>
 #include <assert.h>
 
-inline float _clamp_0_1(float c) { return std::min(std::max(0.f, c), 1.f) ; }
+
 class mColor ;
 
 class mAlbedo {
-	private:
-		float	_aR ;  // 0 <= . <= 1
-		float	_aG ;
-		float	_aB ;
+	public:
+		using value_type = float ;
 
 	private:
-		
+		value_type	_aR ;  // 0 <= . <= 1
+		value_type	_aG ;
+		value_type	_aB ;
+
+	private:
+		value_type _clamp_0_1(value_type c) { return std::min(std::max(0.f, c), 1.f) ; }
 	public: 
 		mAlbedo() : _aR{1.f}, _aG{1.f}, _aB{1.f} {}
-		mAlbedo(float r, float g, float b) : _aR{_clamp_0_1(r)}, _aG{_clamp_0_1(g)}, _aB{_clamp_0_1(b)} {}
+		mAlbedo(value_type r, value_type g, value_type b) 
+			: _aR{_clamp_0_1(r)}, _aG{_clamp_0_1(g)}, _aB{_clamp_0_1(b)} {}
 		// all special members  = default 
 		
 		mAlbedo operator+(const mAlbedo& a) { mAlbedo t{_aR + a._aR, _aG + a._aG, _aB + a._aB} ; return t ; }
@@ -29,12 +33,14 @@ class mAlbedo {
 			_aR = _clamp_0_1(_aR + a._aR), _aG = _clamp_0_1(_aG + a._aG), _aB = _clamp_0_1(_aB + a._aB) ;
 			return *this ;
 		}
-		mAlbedo operator *(float c) const { mAlbedo t{_aR * c, _aG * c, _aB * c} ; return t ; }
+		mAlbedo operator *(value_type c) const { mAlbedo t{_aR * c, _aG * c, _aB * c} ; return t ; }
 		mAlbedo operator *(const mAlbedo& c) const {
 			mAlbedo t{_aR * c._aR, _aG * c._aG, _aB * c._aB} ;
 			return t ;
 		}
-		friend mAlbedo operator*(float c, const mAlbedo& alb) { return alb * c ; }
+		bool operator ==(const mAlbedo& a) { return _aR == a._aR && _aG == a._aG && _aB == a._aB ; }
+
+		friend mAlbedo operator*(value_type c, const mAlbedo& alb) { return alb * c ; }
 		friend class mColor ;
 
 		friend std::ostream&  operator <<(std::ostream& os, const mAlbedo& p) {

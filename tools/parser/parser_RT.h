@@ -189,8 +189,8 @@ triangle_from_iterator(_data_iter& it_tr, _data_iter& begin_vertices)  // it: as
 } // triangle_from_iterator()
 #endif
 
-template <typename T> triangle_RT<T>
-triangle_from_indexes(_data_iter& it_tr, std::vector<long>& indexes)  // it: assumed to be (ui,ui,ui)
+template <typename T> std::pair<triangle_RT<T>, vector_RT<unsigned int>>
+triangle_from_indexes(_data_iter& it_tr, std::vector<long>& indexes)  // it_tr: assumed to be (ui,ui,ui)
 {
     // cout << endl << "--- in triangle_from_ITER (i(" << *it_tr << "), at v0{" << *begin_vertices << "})" ;
 
@@ -204,7 +204,8 @@ triangle_from_indexes(_data_iter& it_tr, std::vector<long>& indexes)  // it: ass
         vertices[i] = std::move(vector_from_string<T>(*iter)) ;
     }
 
-    return triangle_RT<T>{vertices[0], vertices[1], vertices[2]} ;
+    return std::pair<triangle_RT<T>, vector_RT<unsigned int>>
+                    (triangle_RT<T>{vertices[0], vertices[1], vertices[2]}, temp) ;
 } // triangle_from_indexes()
 
 

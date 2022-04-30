@@ -22,6 +22,13 @@ using std::endl ;
 
 #include "vectors_RT.h"
 
+template <typename T>
+struct s_hitPoint {			// auxiliary: presenting a hit point with barycentric coordinates as well
+	vector_RT<T>	_hp ;
+	T				_u_bc ;
+	T				_v_bc ;
+	s_hitPoint() : _hp{}, _u_bc{0}, _v_bc{0} {}
+}; // struct s_hitPoint
 
 template <typename T>	// ??? measure for performance against Tri = (T x, T y, T z) and std::vector<>
 class triangle_RT {		// defined through std::valarray<>
@@ -50,7 +57,7 @@ class triangle_RT {		// defined through std::valarray<>
 						: _base{il}, _normalN{unitV(crossRHS((_base[1] - _base[0]),
 															 (_base[2] - _base[0])))
 											 }	{ assert(il.size() == 3) ; }
-		// ~triangle_RT() = default :                                 skip to enforce default MOVEs
+		// all special members  = default
 
 		// Access
 		void extract(vector_RT<T>& a, vector_RT<T>& b, vector_RT<T>& c) const 
@@ -62,19 +69,18 @@ class triangle_RT {		// defined through std::valarray<>
 		vector_RT<T>		edge(int i) const {return (i == 0 ? (_base[1] - _base[0])
 														: (i == 1 ? (_base[2] - _base[1])
 														: (_base[0] - _base[2]))) ; } // -(V2-V0)
-
-		// Normal: NORMALIZED
+		// Normal (NORMALIZED)
 		vector_RT<T> normalN() const { return _normalN ; }
 		friend vector_RT<T> normalN(const triangle_RT& v) { return v._normalN ; }
 
 		// Ray intersection
-		bool _ray_hit(const vector_RT<T>& o, const vector_RT<T>& r, T& dist, vector_RT<T>& hP) const ;
+		bool _ray_hit(const vector_RT<T>& o, const vector_RT<T>& r, T& dist, s_hitPoint<T>& hP) const ;
+
+		// barycentric co-ords: fine tuning
+		void barycentric(s_hitPoint<T>& hitP) const ; // finally adjust barycentric coords: use carefully
 
 		// Misc
-		const T area() const { return length(crossRHS((_base[1] - _base[0]), (_base[2] - _base[0])))
-									  * static_cast<T>(0.5) ; 
-		}
-		friend const T area(const triangle_RT& t) { return t.area ; }
+		T areaP() const { return length(crossRHS((_base[1] - _base[0]), (_base[2] - _base[0]))) ; }
 
 		// Moves
 		triangle_RT operator +(const vector_RT<T>& mv) { 
@@ -97,7 +103,7 @@ ray_hit_triangle(const vector_RT<T>& origin,	// origin
 				 const vector_RT<T>& ray,		// ray (normalized)
 				 const triangle_RT<T>& tri,		// triangle
 				 T& dist,						// OUTPUT: distance from origin(if returns (true))
-				 vector_RT<T>& pointHit			// OUTPUT: the hip point
+				 s_hitPoint<T>& pointHit			// OUTPUT: the hip point
 				)
 {
 
@@ -112,23 +118,37 @@ ray_hit_triangle(const vector_RT<T>& origin,	// origin
 	auto			coefHit { - (dotPR(normT, origin) - dotPR(normT, tri[0])) / dot_NR} ;
 																// cout << "\n_ coefHit= " << coefHit ;
 
-	if (coefHit <= 0)			return false ;		// triangle is in the back of Origin
+	if (coefHit < 0)			return false ;		// triangle is in the back of Origin
 
-	pointHit = origin + (ray * coefHit) ;			// auto pointHit = origin + (ray * coefHit) ;
+	pointHit._hp = origin + (ray * coefHit) ;			// auto pointHit = origin + (ray * coefHit) ;
 																// cout << "\n_ pointHit= " << pointHit ;
 
 	// inside-outside test(s): test < 0 if pointHit is on the right side: 0, 1, 2
-	// auto	wd = normT.dotPR(crossRHS(tri.edge(0), pointHit - tri[0])) ;
-	if (normT.dotPR(crossRHS(tri.edge(0), pointHit - tri[0])) < 0)   return false ;
-	if (normT.dotPR(crossRHS(tri.edge(1), pointHit - tri[1])) < 0)   return false ;
-	if (normT.dotPR(crossRHS(tri.edge(2), pointHit - tri[2])) < 0)   return false ;
+	
+	if (normT.dotPR(crossRHS(tri.edge(0), pointHit._hp - tri[0])) < 0)	return false ;
+	if (normT.dotPR(crossRHS(tri.edge(1), pointHit._hp - tri[1])) < 0)	return false ;
+	if (normT.dotPR(crossRHS(tri.edge(2), pointHit._hp - tri[2])) < 0)	return false ;
+	// pointHit. _u_bc and _v_bc: just get them out 
 
 	dist = coefHit ;
 	return true ;
 } // class triangle_RT friend ray_hit_triangle
 
+template <typename T> T area_para(const triangle_RT<T>& t) { return t.areaP() ; }
+
+template <typename T> void
+triangle_RT<T>::barycentric(s_hitPoint<T>& hitP) const	// use carefully - proper timing applied
+{
+	T	a_ar = this->areaP() ;
+
+	hitP._u_bc = area_para(triangle_RT<T>{_base[0], hitP._hp, _base[2]}) / a_ar ;
+	hitP._v_bc = area_para(triangle_RT<T>{_base[0], _base[1], hitP._hp}) / a_ar ;
+
+	return ;
+} // triangle_RT barycentric 
+
 template <typename T> bool
-triangle_RT<T>::_ray_hit(const vector_RT<T>& o, const vector_RT<T>& r, T& dist, vector_RT<T>& hP) const
+triangle_RT<T>::_ray_hit(const vector_RT<T>& o, const vector_RT<T>& r, T& dist, s_hitPoint<T>& hP) const
 {
 	bool fl = ray_hit_triangle(o, r, *this, dist, hP) ;
 	return fl ;

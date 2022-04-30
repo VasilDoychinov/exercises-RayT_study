@@ -1,18 +1,7 @@
 // lights_RT.h: define Lights of a scene as
 //		- Types
-//          - class light_RT:
-//          - class cl_lightsRT: 
-//			- mAtom_RT:	defines the atom of an Object: NOT parameterized for now - based on triangle_RT
-//			- mObjects_RT: ...   an Object is a seq mAtom_RT: FURTHER might be {Atom<T ... types>}
-//                        provides link to the scene descriptor, iterators, etc
-//				- all special members: default 
-//				- other constructors
-//				- ray_hit(): Visibility, returns pair<closest Atom, distance to plane>
-//              - descriptor: might be used with indexing - see triangle_from_indexes() or, without
-//                            see triangle_from_iterator()
-//			- mScene_RT: ...    a Scene, linked to mObjetcs_RT->scene descriptor
-//              - includes: camera(s), etc
-//				- operator(): does the job (ray tracing)
+//          - class light_RT: defines a light
+//          - class cl_lightsRT: ... sequence of ...
 //
 
 
@@ -71,6 +60,7 @@ class cl_seqLightsRT {
 
         template <typename T> void add(T&& light) { _base.push_back(std::forward<T>(light)) ; }
         void remove(size_t ind) { _base.erase(cbegin(_base) + ind) ; }
+        size_t  num_of_lights() const { return _base.size() ; }
 
         const_iterator begin_lights() { return _base.cbegin() ; }
         const_iterator end_lights() { return _base.cend() ; }

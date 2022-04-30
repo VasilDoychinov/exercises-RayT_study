@@ -31,6 +31,8 @@ const char *  SCENE0_name = "data/scene0.crtscene" ;
 const char *  SCENE1_name = "data/scene1.crtscene" ;
 const char *  SCENE2_name = "data/scene2.crtscene" ;
 const char *  SCENE3_name = "data/scene3.crtscene" ;
+const char *  SCENE4_name = "data/scene4.crtscene" ;
+const char *  SCENE5_name = "data/scene5.crtscene" ;
 
 
 string extract_fname(const string& str) ;							// remove extension and path
@@ -41,9 +43,9 @@ camera_RT	get_sceneCAM(cl_SceneDescr& scene) ;
 
 void render_scene(const char* scene_name) ;
 
-// size_t		atomChecks{0} ;
-// size_t		boxMisses{0} ;
-// size_t		boxChecks{0} ;
+// size_t		atomChecks{0} ; -> atomic<>
+// size_t		boxMisses{0} ; ...
+// size_t		boxChecks{0} ; ...
 
 
 int
@@ -69,6 +71,13 @@ main()
 
 		cout << endl << endl << "> render data/scene3 (y/n): " ; std::cin >> ch ;
 		if (std::toupper(ch) == 'Y')	render_scene(SCENE3_name) ;
+
+		cout << endl << endl << "> render data/scene4 (y/n): " ; std::cin >> ch ;
+		if (std::toupper(ch) == 'Y')	render_scene(SCENE4_name) ;
+
+		cout << endl << endl << "> render data/scene5 (y/n): " ; std::cin >> ch ;
+		if (std::toupper(ch) == 'Y')	render_scene(SCENE5_name) ;
+
 	} catch (std::exception& e) {
 		std::cerr << endl << endl
 			<< endl << "___ exception Caught: " << e.what()
@@ -87,11 +96,13 @@ void render_scene(const char* scene_name)
 	cl_SceneDescr	scene_descr{scene_name} ;
 	scene_descr.activate() ;						// cout << endl << "- ", scene_descr.show_sections(cout) ;
 
-	mObjects_RT		scene_objects{&scene_descr} ;
-	cl_seqLightsRT	scene_lights(&scene_descr) ;
-	camera_RT		camWS{get_sceneCAM(scene_descr)} ;
+	mObjects_RT			scene_objects{&scene_descr} ;
+	cl_seqLightsRT		scene_lights(&scene_descr) ;
+	cl_seqTexturesRT	scene_textures(&scene_descr) ;
+													// cout << endl << " - " << scene_textures ;
+	camera_RT			camWS{get_sceneCAM(scene_descr)} ;
 
-	mScene_RT		scene_rt{&scene_descr, &scene_objects, &scene_lights} ;
+	mScene_RT		scene_rt{&scene_descr, &scene_objects, &scene_lights, &scene_textures} ;
 	cout << "\n: camera #0: " << camWS ;
 
 	get_sceneWH(scene_descr, grWidth, grHeight) ; 
