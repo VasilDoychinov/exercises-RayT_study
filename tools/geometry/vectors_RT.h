@@ -51,8 +51,9 @@ class vector_RT {				// V = (T x, T y, T z) performs faster than V{std::valarray
 		// Normalizing
 		vector_RT& normalize() { 
 			/*if (_x != 0 || _y != 0 || _z != 0) { */
-			auto norm = length() ; assert(norm > 0) ;
-			norm = (1 / norm), _x *= norm, _y *= norm, _z *= norm ;
+			auto norm = length() ; /*assert(norm > 0) ;*/ 
+			if (norm > 0)	{ norm = (1 / norm), _x *= norm, _y *= norm, _z *= norm ; }
+			else			{ _x = _y = _z = 0 ; }
 			/*}*/ 
 			return *this ;
 		}

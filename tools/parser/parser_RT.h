@@ -124,7 +124,7 @@ vector_from_string(const std::string& str)  // there has to be two ',': defining
                     i = j + 1 ;
             }
         }
-        if (count < 2)      throw std::runtime_error("___ bad vector descriptor") ;
+        if (count < 2) { cout << "- parser<" << str << ">" ; throw std::runtime_error("___ bad vector descriptor") ; }
         mark[2] = static_cast<T>(std::stod(str.substr(i))) ;
     } catch (...) { throw ; }
 

@@ -95,7 +95,7 @@ class triangle_RT {		// defined through std::valarray<>
 		vector_RT<T>	max_shape() const ;
 
 		template <class T> friend std::ostream& operator<<(std::ostream& os, const triangle_RT<T>& t) ;
-}; // class vector_RT
+}; // class triangle_RT
 
 																		// triangle_RT: templates & inlines
 template <typename T> bool
